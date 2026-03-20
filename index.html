@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Escape to Portugal - Dodge Rockets Game</title>
+    <meta property="og:title" content="Escape to Portugal - Dodge Rockets Game">
+    <meta property="og:description" content="Help the Road Runner dodge rockets in Dubai and escape to Portugal! Can you reach the Pastel de Nata?">
+    <meta property="og:type" content="website">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a1a; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; z-index: 10; }
+        .overlay.active { pointer-events: all; }
+        .overlay-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); opacity: 0; transition: opacity 0.5s; }
+        .overlay.active .overlay-bg { opacity: 1; }
+        .overlay-content { position: relative; z-index: 2; text-align: center; color: white; padding: 12px; max-width: 500px; width: 95%; opacity: 0; transform: translateY(30px); transition: all 0.5s ease 0.2s; overflow-y: auto; max-height: 90vh; }
+        .overlay.active .overlay-content { opacity: 1; transform: translateY(0); }
+        h1 { font-size: clamp(24px, 5.5vw, 52px); margin-bottom: 6px; text-shadow: 0 0 30px rgba(233,69,96,0.8); }
+        h2 { font-size: clamp(16px, 3.5vw, 28px); margin-bottom: 14px; color: #f39c12; }
+        .subtitle { font-size: clamp(13px, 2.8vw, 18px); color: #aaa; margin-bottom: 20px; line-height: 1.4; }
+        .btn { display: inline-block; padding: 12px 32px; border: none; border-radius: 50px; font-size: clamp(14px, 3vw, 18px); font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 2px; margin: 5px; }
+        .btn-play { background: linear-gradient(135deg, #e94560, #f39c12); color: white; box-shadow: 0 4px 25px rgba(233,69,96,0.5); }
+        .btn-play:hover { transform: scale(1.05); box-shadow: 0 6px 35px rgba(233,69,96,0.7); }
+        .btn-share { background: #0077B5; color: white; box-shadow: 0 4px 20px rgba(0,119,181,0.4); font-size: clamp(12px, 2.5vw, 15px); }
+        .btn-share:hover { background: #005f8f; transform: scale(1.05); }
+        .btn-copy { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: clamp(11px, 2.3vw, 14px); padding: 8px 20px; }
+        .btn-copy:hover { background: rgba(255,255,255,0.25); }
+        .score-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: clamp(10px, 2.5vw, 18px); margin: clamp(8px, 2vw, 14px) 0; backdrop-filter: blur(10px); }
+        .stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: clamp(13px, 2.8vw, 17px); }
+        .stat:last-child { border: none; }
+        .stat-label { color: #aaa; }
+        .stat-value { font-weight: 700; color: #f39c12; }
+        .progress-label { font-size: clamp(11px, 2.5vw, 13px); color: #888; margin-top: 6px; }
+        .controls-hint { font-size: clamp(10px, 2.3vw, 14px); color: #666; margin-top: 14px; }
+        .win-title { color: #2ecc71 !important; text-shadow: 0 0 30px rgba(46,204,113,0.8) !important; }
+        .beep-beep { font-size: clamp(18px, 4.5vw, 36px); color: #f39c12; font-weight: 900; font-style: italic; margin: 8px 0; text-shadow: 0 0 20px rgba(243,156,18,0.6); }
+    </style>
+</head>
+<body>
+    <canvas id="game"></canvas>
+
+    <!-- MENU -->
+    <div class="overlay active" id="menuOverlay">
+        <div class="overlay-bg"></div>
+        <div class="overlay-content">
+            <div class="beep-beep">BEEP BEEP!</div>
+            <h1>Escape to Portugal</h1>
+            <h2>Dubai Rocket Dodger</h2>
+            <p class="subtitle">Help the Road Runner dodge rockets and escape the Coyote! A FRESH lawyer will guide you to the Pastel de Nata!</p>
+            <button class="btn btn-play" onclick="startGame()">RUN!</button>
+            <p class="controls-hint">Arrow Keys / WASD / Tap left-right to move</p>
+        </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div class="overlay" id="gameOverOverlay">
+        <div class="overlay-bg"></div>
+        <div class="overlay-content">
+            <h1>GAME OVER</h1>
+            <h2 id="goDistance">0 km</h2>
+            <div class="score-card">
+                <div class="stat"><span class="stat-label">Distance</span><span class="stat-value" id="goDistStat">0 km</span></div>
+                <div class="stat"><span class="stat-label">Rockets Dodged</span><span class="stat-value" id="goDodged">0</span></div>
+                <div class="stat"><span class="stat-label">Top Speed</span><span class="stat-value" id="goSpeed">0 km/h</span></div>
+                <div class="stat"><span class="stat-label">Total Score</span><span class="stat-value" id="goScore">0</span></div>
+            </div>
+            <p class="progress-label" id="goProgress">You made it 0% of the way to Portugal</p>
+            <div style="margin-top:12px">
+                <button class="btn btn-play" onclick="startGame()">Try Again</button><br>
+                <button class="btn btn-share" onclick="shareLinkedIn()">Share on LinkedIn</button>
+                <button class="btn btn-copy" onclick="copyScore()">Copy Score</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WIN -->
+    <div class="overlay" id="winOverlay">
+        <div class="overlay-bg"></div>
+        <div class="overlay-content">
+            <div class="beep-beep">BEEP BEEP! MADE IT!</div>
+            <h1 class="win-title">PORTUGAL!</h1>
+            <h2 style="color:#2ecc71">You reached the Pastel de Nata!</h2>
+            <div class="score-card">
+                <div class="stat"><span class="stat-label">Distance</span><span class="stat-value">6,500 km</span></div>
+                <div class="stat"><span class="stat-label">Rockets Dodged</span><span class="stat-value" id="winDodged">0</span></div>
+                <div class="stat"><span class="stat-label">Total Score</span><span class="stat-value" id="winScore">0</span></div>
+            </div>
+            <div style="margin-top:12px">
+                <button class="btn btn-play" onclick="startGame()">Play Again</button><br>
+                <button class="btn btn-share" onclick="shareLinkedIn()">Share on LinkedIn</button>
+                <button class="btn btn-copy" onclick="copyScore()">Copy Score</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ===== CANVAS SETUP =====
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+var W, H, dpr, isPortrait;
+
+function resize() {
+    dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    isPortrait = H > W;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Recalculate player/coyote positions on resize
+    if (player) {
+        player.y = H * 0.82;
+        player.w = Math.max(24, Math.min(W, H) * 0.06);
+        player.h = Math.max(40, Math.min(W, H) * 0.09);
+    }
+    // Coyote divers get new sizes on resize
+    if (coyoteDivers) coyoteDivers.forEach(c => {
+        c.w = Math.max(36, Math.min(W, H) * 0.09);
+        c.h = Math.max(60, Math.min(W, H) * 0.14);
+    });
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ===== WEB AUDIO =====
+var audioCtx = null;
+function initAudio() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch(e) { console.warn('Audio init failed:', e); }
+}
+
+function playBeepBeep() {
+    if (!audioCtx) return;
+    try {
+        const t = audioCtx.currentTime;
+        // Classic "meep meep" - quick, nasal, horn-like two-tone
+        // First "meep" - square wave for that cartoon nasal quality
+        function meep(startTime, baseFreq) {
+            // Main tone
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'square';
+            o.frequency.setValueAtTime(baseFreq, startTime);
+            o.frequency.setValueAtTime(baseFreq * 1.15, startTime + 0.02);
+            o.frequency.setValueAtTime(baseFreq * 1.3, startTime + 0.04);
+            o.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, startTime + 0.07);
+            g.gain.setValueAtTime(0.15, startTime);
+            g.gain.setValueAtTime(0.2, startTime + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(startTime); o.stop(startTime + 0.1);
+
+            // Harmonic overtone for richness
+            const o2 = audioCtx.createOscillator();
+            const g2 = audioCtx.createGain();
+            o2.type = 'sine';
+            o2.frequency.setValueAtTime(baseFreq * 2, startTime);
+            o2.frequency.exponentialRampToValueAtTime(baseFreq * 3, startTime + 0.07);
+            g2.gain.setValueAtTime(0.08, startTime);
+            g2.gain.exponentialRampToValueAtTime(0.01, startTime + 0.08);
+            o2.connect(g2); g2.connect(audioCtx.destination);
+            o2.start(startTime); o2.stop(startTime + 0.08);
+        }
+        meep(t, 1200);        // First "meep"
+        meep(t + 0.12, 1400); // Second "meep" (slightly higher)
+    } catch(e) {}
+}
+
+function playExplosionSound() {
+    if (!audioCtx) return;
+    try {
+        const t = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(150, t);
+        o.frequency.exponentialRampToValueAtTime(30, t + 0.4);
+        g.gain.setValueAtTime(0.2, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.4);
+        // Noise
+        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+        const n = audioCtx.createBufferSource();
+        const ng = audioCtx.createGain();
+        n.buffer = buf;
+        ng.gain.setValueAtTime(0.12, t);
+        ng.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        n.connect(ng); ng.connect(audioCtx.destination);
+        n.start(t);
+    } catch(e) {}
+}
+
+function playWinSound() {
+    if (!audioCtx) return;
+    try {
+        [523, 659, 784, 1047].forEach((freq, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sine'; o.frequency.value = freq;
+            const t = audioCtx.currentTime + i * 0.15;
+            g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.2, t);
+            g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(t); o.stop(t + 0.4);
+        });
+    } catch(e) {}
+}
+
+function playLawyerSound() {
+    if (!audioCtx) return;
+    try {
+        const t = audioCtx.currentTime;
+        // Friendly "ding" sound
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.2, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.3);
+    } catch(e) {}
+}
+
+// ===== GAME STATE =====
+var MENU = 0, PLAYING = 1, GAME_OVER = 2, WIN = 3, ENTERING_PORTUGAL = 4, EATING_NATA = 5;
+var state = MENU;
+var score = 0, rocketsDodged = 0, progress = 0, elapsed = 0, topSpeed = 0;
+var player, rockets = [], particles = [], stars = [], coyote;
+var shakeTimer = 0, shakeX = 0, shakeY = 0;
+var confetti = [], speedLines = [];
+var lastTime = 0, beepTimer = 0, beepCooldown = 0;
+var lawyers = []; // FRESH lawyers along the route
+var lawyerMessages = []; // floating messages from lawyers
+var pastelDeNata = null; // finish line
+var redCarpet = null; // red carpet for Portugal entrance
+var enterPortugalTimer = 0; // timer for entering portugal sequence
+var eatingTimer = 0; // timer for eating animation
+var eatingPhase = 0; // 0=approaching, 1=eating, 2=done
+var TOTAL_DISTANCE = 6500;
+var GAME_DURATION = 19;
+
+// Lawyer guide messages
+var LAWYER_QUOTES = [
+    "This way to Portugal! \u2192",
+    "FRESH says: Keep running!",
+    "Almost at the border!",
+    "Golden Visa awaits!",
+    "Pastel de Nata ahead!",
+    "Portugal is safe! Go!",
+    "FRESH guides the way!",
+    "Don't stop now!",
+    "Lisbon is calling!",
+    "Legal escape route! \u2192"
+];
+
+// ===== ENTITIES =====
+function createPlayer() {
+    const sz = Math.min(W, H);
+    const scale = isPortrait ? 1.15 : 1;
+    return { x: W / 2, y: H * 0.82, w: Math.max(28, sz * 0.065 * scale), h: Math.max(44, sz * 0.095 * scale), legFrame: 0 };
+}
+
+// Coyote dive-bombs from above like a rocket!
+var coyoteDivers = [];
+var nextCoyoteTime = 8; // first coyote appears after 8 seconds
+
+function spawnCoyoteDiver() {
+    const sz = Math.min(W, H);
+    coyoteDivers.push({
+        x: player ? player.x + (Math.random() - 0.5) * W * 0.3 : W / 2,
+        y: -80,
+        w: Math.max(36, sz * 0.09),
+        h: Math.max(60, sz * 0.14),
+        vy: 120 + progress * 200,
+        vx: (Math.random() - 0.5) * 60,
+        rotation: 0,
+        legFrame: 0,
+        reachFrame: 0,
+        missed: false
+    });
+}
+
+// ===== DRAW ROAD RUNNER =====
+function drawRoadRunner(p) {
+    const s = p.h / 60;
+    const bob = Math.abs(Math.sin(p.legFrame * 0.4)) * 3 * s;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+
+    // Tail feathers
+    const tw = Math.sin(p.legFrame * 0.3) * 0.08;
+    for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        const a = Math.PI + 0.4 - i * 0.12 + tw;
+        const tl = (22 + i * 2) * s;
+        ctx.moveTo(-5 * s, -2 * s);
+        ctx.quadraticCurveTo(Math.cos(a) * tl * 0.5 + (i % 2 ? 3 : -3) * s, Math.sin(a) * tl * 0.2, Math.cos(a) * tl, Math.sin(a) * tl * 0.4);
+        ctx.strokeStyle = i % 2 === 0 ? '#3b1f8e' : '#5e3bbf';
+        ctx.lineWidth = 3.5 * s; ctx.lineCap = 'round'; ctx.stroke();
+    }
+
+    // Legs (spinning)
+    for (let side = -1; side <= 1; side += 2) {
+        const ph = p.legFrame * 0.6 + (side === 1 ? Math.PI : 0);
+        const hx = side * 4 * s, hy = 12 * s;
+        const kx = hx + Math.cos(ph) * 14 * s, ky = hy + 4 * s;
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(kx, ky);
+        ctx.strokeStyle = '#e8890c'; ctx.lineWidth = 4 * s; ctx.lineCap = 'round'; ctx.stroke();
+        const fx = kx + Math.cos(ph + 1) * 12 * s, fy = ky + 10 * s;
+        ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(fx, fy); ctx.stroke();
+        ctx.beginPath();
+        for (let t = -1; t <= 1; t++) { ctx.moveTo(fx, fy); ctx.lineTo(fx + (5 + t * 3) * s, fy + 4 * s); }
+        ctx.lineWidth = 2.5 * s; ctx.stroke();
+    }
+
+    // Speed blur behind legs
+    const bg = ctx.createRadialGradient(0, 16 * s, 0, 0, 16 * s, 18 * s);
+    bg.addColorStop(0, 'rgba(232,137,12,0.2)'); bg.addColorStop(1, 'rgba(232,137,12,0)');
+    ctx.fillStyle = bg; ctx.fillRect(-20 * s, 4 * s, 40 * s, 24 * s);
+
+    // Body
+    ctx.beginPath(); ctx.ellipse(0, -4 * s + bob, 13 * s, 18 * s, 0.05, 0, Math.PI * 2);
+    ctx.fillStyle = '#2b7de9'; ctx.fill();
+    // Belly
+    ctx.beginPath(); ctx.ellipse(3 * s, 2 * s + bob, 8 * s, 12 * s, 0.1, 0, Math.PI * 2);
+    ctx.fillStyle = '#7ec8f0'; ctx.fill();
+
+    // Neck
+    const ny = -32 * s + bob;
+    ctx.beginPath(); ctx.moveTo(2 * s, -16 * s + bob); ctx.quadraticCurveTo(8 * s, -24 * s + bob, 5 * s, ny);
+    ctx.lineWidth = 7 * s; ctx.strokeStyle = '#2b7de9'; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5 * s, -16 * s + bob); ctx.quadraticCurveTo(10 * s, -24 * s + bob, 7 * s, ny);
+    ctx.lineWidth = 3 * s; ctx.strokeStyle = '#7ec8f0'; ctx.stroke();
+
+    // Head
+    const headX = 5 * s, headY = ny - 8 * s;
+    ctx.beginPath(); ctx.ellipse(headX, headY, 13 * s, 11 * s, -0.05, 0, Math.PI * 2);
+    ctx.fillStyle = '#2b7de9'; ctx.fill();
+
+    // Crest feathers
+    for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        const ca = -Math.PI / 2 + (i - 2) * 0.18 + Math.sin(p.legFrame * 0.25 + i) * 0.06;
+        const cl = (16 + i * 2.5) * s;
+        ctx.moveTo(headX - 3 * s, headY - 8 * s);
+        ctx.quadraticCurveTo(headX - 5 * s + Math.cos(ca + 0.3) * cl * 0.5, headY - 8 * s + Math.sin(ca + 0.3) * cl * 0.5,
+            headX - 5 * s + Math.cos(ca) * cl, headY - 8 * s + Math.sin(ca) * cl);
+        ctx.strokeStyle = i % 2 === 0 ? '#3b1f8e' : '#6b3fd4';
+        ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+    }
+
+    // Eye
+    ctx.beginPath(); ctx.ellipse(headX + 7 * s, headY - 1 * s, 7 * s, 7.5 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'white'; ctx.fill();
+    ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 0.8 * s; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(headX + 9 * s, headY - 0.5 * s, 3.5 * s, 4 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#111'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(headX + 10 * s, headY - 2 * s, 1.5 * s, 1.8 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'white'; ctx.fill();
+
+    // Beak
+    ctx.beginPath();
+    ctx.moveTo(headX + 14 * s, headY - 4 * s);
+    ctx.quadraticCurveTo(headX + 28 * s, headY - 2 * s, headX + 34 * s, headY);
+    ctx.quadraticCurveTo(headX + 28 * s, headY + 0.5 * s, headX + 14 * s, headY + 1 * s);
+    ctx.closePath(); ctx.fillStyle = '#f5a623'; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(headX + 14 * s, headY + 2 * s);
+    ctx.quadraticCurveTo(headX + 26 * s, headY + 4 * s, headX + 32 * s, headY + 2 * s);
+    ctx.quadraticCurveTo(headX + 26 * s, headY + 1.5 * s, headX + 14 * s, headY + 1 * s);
+    ctx.closePath(); ctx.fillStyle = '#e8890c'; ctx.fill();
+
+    ctx.restore();
+}
+
+// ===== DRAW COYOTE (diving from above) =====
+function drawCoyoteDiver(c) {
+    const s = c.h / 60;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    // Rotate to face downward (diving pose)
+    ctx.rotate(Math.PI * 0.5 + Math.sin(c.legFrame * 0.2) * 0.1);
+
+    // Arms stretched forward (reaching down toward road runner)
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(12 * s, side * 5 * s);
+        ctx.lineTo(26 * s + Math.sin(c.reachFrame) * 3 * s, side * 3 * s);
+        ctx.strokeStyle = '#8b6914'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+        // Claws
+        for (let f = -1; f <= 1; f++) {
+            ctx.beginPath(); ctx.moveTo(26 * s, side * 3 * s); ctx.lineTo(30 * s, side * 3 * s + f * 3 * s);
+            ctx.lineWidth = 1.5 * s; ctx.stroke();
+        }
+    }
+
+    // Legs trailing behind
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(-8 * s, side * 5 * s);
+        ctx.lineTo(-22 * s + Math.sin(c.legFrame * 0.5 + side) * 5 * s, side * 8 * s);
+        ctx.strokeStyle = '#8b6914'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+    }
+
+    // Tail (straight behind, streaming)
+    ctx.beginPath();
+    ctx.moveTo(-10 * s, 0);
+    ctx.quadraticCurveTo(-20 * s, Math.sin(c.legFrame * 0.3) * 4 * s, -28 * s, Math.sin(c.legFrame * 0.4) * 6 * s);
+    ctx.strokeStyle = '#8b6914'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+
+    // Body
+    ctx.beginPath(); ctx.ellipse(0, 0, 15 * s, 10 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#a07820'; ctx.fill();
+    // Belly
+    ctx.beginPath(); ctx.ellipse(3 * s, 0, 10 * s, 6 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#d4b87a'; ctx.fill();
+
+    // Head
+    const hx = 16 * s, hy = 0;
+    ctx.beginPath(); ctx.ellipse(hx, hy, 9 * s, 7 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#a07820'; ctx.fill();
+
+    // Snout (pointing down in dive direction)
+    ctx.beginPath();
+    ctx.moveTo(hx + 6 * s, hy - 2 * s);
+    ctx.lineTo(hx + 18 * s, hy + 1 * s);
+    ctx.lineTo(hx + 6 * s, hy + 3 * s);
+    ctx.closePath(); ctx.fillStyle = '#c49a3c'; ctx.fill();
+
+    // Nose
+    ctx.beginPath(); ctx.ellipse(hx + 17 * s, hy + 1 * s, 2 * s, 1.5 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#111'; ctx.fill();
+
+    // Eye (wide, panicked!)
+    ctx.beginPath(); ctx.ellipse(hx + 4 * s, hy - 3 * s, 4 * s, 5 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffde0'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx + 5 * s, hy - 2 * s, 2 * s, 3 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#111'; ctx.fill();
+    // Panicked eyebrow (raised)
+    ctx.beginPath(); ctx.moveTo(hx, hy - 8 * s); ctx.lineTo(hx + 8 * s, hy - 7 * s);
+    ctx.strokeStyle = '#6b4f10'; ctx.lineWidth = 2 * s; ctx.lineCap = 'round'; ctx.stroke();
+
+    // Ears (flapping back from wind)
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(hx - 2 * s, hy + side * 4 * s);
+        ctx.quadraticCurveTo(hx - 10 * s, hy + side * 10 * s + Math.sin(c.legFrame * 0.4) * 3 * s,
+            hx - 14 * s, hy + side * 8 * s);
+        ctx.strokeStyle = '#a07820'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+    }
+
+    // "ACME" sign held (tiny, funny touch)
+    ctx.save();
+    ctx.translate(-6 * s, -12 * s);
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(-8 * s, -4 * s, 16 * s, 8 * s);
+    ctx.font = `bold ${5 * s}px system-ui`;
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center';
+    ctx.fillText('ACME', 0, 2 * s);
+    ctx.restore();
+
+    ctx.restore();
+}
+
+// ===== DRAW FRESH LAWYER =====
+function drawLawyer(l) {
+    const s = l.size / 40;
+    ctx.save();
+    ctx.translate(l.x, l.y);
+
+    // Shadow
+    ctx.beginPath(); ctx.ellipse(0, 22 * s, 12 * s, 4 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fill();
+
+    // Legs
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(-5 * s, 10 * s, 4 * s, 12 * s);
+    ctx.fillRect(1 * s, 10 * s, 4 * s, 12 * s);
+
+    // Shoes
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-6 * s, 20 * s, 6 * s, 3 * s);
+    ctx.fillRect(0, 20 * s, 6 * s, 3 * s);
+
+    // Body (suit)
+    ctx.beginPath(); ctx.ellipse(0, 0, 10 * s, 14 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a3a5c'; ctx.fill();
+
+    // Tie
+    ctx.beginPath();
+    ctx.moveTo(0, -6 * s); ctx.lineTo(-2 * s, 2 * s); ctx.lineTo(0, 4 * s); ctx.lineTo(2 * s, 2 * s); ctx.closePath();
+    ctx.fillStyle = '#c0392b'; ctx.fill();
+
+    // Shirt collar
+    ctx.beginPath(); ctx.moveTo(-4 * s, -8 * s); ctx.lineTo(0, -5 * s); ctx.lineTo(4 * s, -8 * s);
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2 * s; ctx.stroke();
+
+    // Head
+    ctx.beginPath(); ctx.ellipse(0, -16 * s, 8 * s, 9 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0c8a0'; ctx.fill();
+
+    // Hair
+    ctx.beginPath(); ctx.ellipse(0, -22 * s, 9 * s, 6 * s, 0, 0, Math.PI);
+    ctx.fillStyle = '#2c1810'; ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(-3 * s, -17 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(3 * s, -17 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+
+    // Glasses
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1 * s;
+    ctx.beginPath(); ctx.ellipse(-3 * s, -17 * s, 3 * s, 2.5 * s, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(3 * s, -17 * s, 3 * s, 2.5 * s, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -17 * s); ctx.lineTo(0, -17 * s); ctx.stroke();
+
+    // Smile
+    ctx.beginPath(); ctx.arc(0, -14 * s, 4 * s, 0.1, Math.PI - 0.1);
+    ctx.strokeStyle = '#a0522d'; ctx.lineWidth = 1 * s; ctx.stroke();
+
+    // Briefcase
+    ctx.fillStyle = '#6b4513';
+    ctx.fillRect(10 * s, -2 * s, 10 * s, 8 * s);
+    ctx.strokeStyle = '#4a3010'; ctx.lineWidth = 1 * s;
+    ctx.strokeRect(10 * s, -2 * s, 10 * s, 8 * s);
+    ctx.fillStyle = '#d4a020';
+    ctx.fillRect(14 * s, 1 * s, 3 * s, 2 * s);
+
+    // "FRESH" label on briefcase
+    ctx.font = `bold ${3.5 * s}px system-ui`;
+    ctx.fillStyle = '#d4a020';
+    ctx.textAlign = 'center';
+    ctx.fillText('FRESH', 15 * s, -0.5 * s);
+
+    // Pointing hand (toward right / Portugal direction)
+    ctx.beginPath();
+    ctx.moveTo(-12 * s, -6 * s);
+    ctx.lineTo(-20 * s, -12 * s);
+    ctx.strokeStyle = '#f0c8a0'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+    // Pointing finger
+    ctx.beginPath();
+    ctx.moveTo(-20 * s, -12 * s);
+    ctx.lineTo(-24 * s, -14 * s);
+    ctx.lineWidth = 2 * s; ctx.stroke();
+
+    ctx.restore();
+}
+
+// ===== DRAW PASTEL DE NATA =====
+function drawPastelDeNata(x, y, size) {
+    const s = size / 40;
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Pastry cup (flaky golden crust)
+    ctx.beginPath();
+    ctx.moveTo(-16 * s, 8 * s);
+    ctx.quadraticCurveTo(-18 * s, -2 * s, -12 * s, -10 * s);
+    ctx.lineTo(12 * s, -10 * s);
+    ctx.quadraticCurveTo(18 * s, -2 * s, 16 * s, 8 * s);
+    ctx.closePath();
+    const cg = ctx.createLinearGradient(0, -10 * s, 0, 8 * s);
+    cg.addColorStop(0, '#d4a050');
+    cg.addColorStop(0.5, '#c8922a');
+    cg.addColorStop(1, '#a07020');
+    ctx.fillStyle = cg;
+    ctx.fill();
+    ctx.strokeStyle = '#8a6018'; ctx.lineWidth = 1 * s; ctx.stroke();
+
+    // Flaky texture lines
+    for (let i = -3; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * 4 * s, -8 * s);
+        ctx.quadraticCurveTo(i * 4.5 * s, 0, i * 4 * s, 7 * s);
+        ctx.strokeStyle = 'rgba(160,100,20,0.3)'; ctx.lineWidth = 0.5 * s; ctx.stroke();
+    }
+
+    // Custard filling (creamy yellow with caramelized spots)
+    ctx.beginPath();
+    ctx.ellipse(0, -8 * s, 12 * s, 5 * s, 0, 0, Math.PI * 2);
+    const fg = ctx.createRadialGradient(0, -8 * s, 0, 0, -8 * s, 12 * s);
+    fg.addColorStop(0, '#fff3c4');
+    fg.addColorStop(0.6, '#f5d78e');
+    fg.addColorStop(1, '#e8c35a');
+    ctx.fillStyle = fg;
+    ctx.fill();
+
+    // Caramelized burn spots (signature!)
+    const spots = [[-4, -9, 3], [3, -7, 2.5], [-1, -10, 2], [5, -9, 1.8], [-6, -7, 2]];
+    spots.forEach(([sx, sy, sr]) => {
+        ctx.beginPath();
+        ctx.ellipse(sx * s, sy * s, sr * s, sr * 0.7 * s, Math.random() * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(139,69,19,${0.3 + Math.random() * 0.3})`;
+        ctx.fill();
+    });
+
+    // Shine
+    ctx.beginPath();
+    ctx.ellipse(-3 * s, -10 * s, 3 * s, 1.5 * s, -0.3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fill();
+
+    // Glow effect around it (makes it look like a goal/prize)
+    ctx.beginPath();
+    ctx.ellipse(0, -2 * s, 22 * s, 16 * s, 0, 0, Math.PI * 2);
+    const glow = ctx.createRadialGradient(0, -2 * s, 5 * s, 0, -2 * s, 22 * s);
+    glow.addColorStop(0, 'rgba(255,220,100,0.3)');
+    glow.addColorStop(1, 'rgba(255,220,100,0)');
+    ctx.fillStyle = glow;
+    ctx.fill();
+
+    ctx.restore();
+}
+
+// ===== SPEED LINES =====
+function updateSpeedLines(dt) {
+    if (state === PLAYING) {
+        if (Math.random() < 0.3 + progress * 0.5) {
+            speedLines.push({ x: Math.random() * W, y: Math.random() * H * 0.75, len: 20 + Math.random() * 40, speed: 300 + Math.random() * 400, alpha: 0.15 + Math.random() * 0.2 });
+        }
+    }
+    for (let i = speedLines.length - 1; i >= 0; i--) {
+        speedLines[i].y += speedLines[i].speed * dt;
+        speedLines[i].alpha -= dt * 0.3;
+        if (speedLines[i].y > H || speedLines[i].alpha <= 0) speedLines.splice(i, 1);
+    }
+}
+function drawSpeedLines() {
+    speedLines.forEach(l => {
+        ctx.beginPath(); ctx.moveTo(l.x, l.y); ctx.lineTo(l.x, l.y - l.len);
+        ctx.strokeStyle = `rgba(255,255,255,${l.alpha})`; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+}
+
+// ===== ROCKETS =====
+function spawnRocket() {
+    rockets.push({
+        x: Math.random() * W, y: -40,
+        vx: (Math.random() - 0.5) * 100,
+        vy: 180 + progress * 400 + Math.random() * 120,
+        w: 12, h: 35,
+        homing: progress > 0.4 && Math.random() < (progress - 0.2) * 0.6,
+        trail: [], dodged: false
+    });
+}
+
+function drawRocket(r) {
+    ctx.save();
+    const angle = Math.atan2(r.vy, r.vx) - Math.PI / 2;
+    ctx.translate(r.x, r.y); ctx.rotate(angle);
+
+    for (let i = r.trail.length - 1; i >= 0; i--) {
+        const t = r.trail[i];
+        if (t.alpha > 0 && t.size > 0) {
+            ctx.beginPath(); ctx.arc(t.x - r.x, t.y - r.y, Math.max(0, t.size), 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,${150 + Math.random()*50|0},50,${t.alpha})`; ctx.fill();
+        }
+    }
+
+    ctx.beginPath(); ctx.moveTo(0, -r.h/2); ctx.lineTo(-r.w/2, r.h/3);
+    ctx.quadraticCurveTo(0, r.h/2, r.w/2, r.h/3); ctx.closePath();
+    const g = ctx.createLinearGradient(0, -r.h/2, 0, r.h/2);
+    g.addColorStop(0, '#e94560'); g.addColorStop(0.6, '#c0392b'); g.addColorStop(1, '#922b21');
+    ctx.fillStyle = g; ctx.fill();
+
+    ctx.beginPath(); ctx.moveTo(0, -r.h/2); ctx.lineTo(-4, -r.h/4); ctx.lineTo(4, -r.h/4);
+    ctx.closePath(); ctx.fillStyle = '#f5f5f5'; ctx.fill();
+
+    ctx.beginPath(); ctx.moveTo(-r.w/2, r.h/4); ctx.lineTo(-r.w, r.h/2); ctx.lineTo(-r.w/2+2, r.h/3);
+    ctx.fillStyle = '#e94560'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(r.w/2, r.h/4); ctx.lineTo(r.w, r.h/2); ctx.lineTo(r.w/2-2, r.h/3);
+    ctx.fillStyle = '#e94560'; ctx.fill();
+
+    const fh = 10 + Math.random() * 15;
+    ctx.beginPath(); ctx.moveTo(-r.w/3, r.h/3); ctx.quadraticCurveTo(0, r.h/3+fh, r.w/3, r.h/3);
+    ctx.fillStyle = `rgb(255,${180+Math.random()*75|0},50)`; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-r.w/5, r.h/3); ctx.quadraticCurveTo(0, r.h/3+fh*0.7, r.w/5, r.h/3);
+    ctx.fillStyle = '#ffe066'; ctx.fill();
+
+    ctx.restore();
+}
+
+// ===== PARTICLES =====
+function spawnExplosion(x, y) {
+    for (let i = 0; i < 25; i++) {
+        const a = Math.random() * Math.PI * 2, sp = 50 + Math.random() * 200;
+        particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp-50, life: 0.5+Math.random()*0.8, maxLife: 0.5+Math.random()*0.8, size: 2+Math.random()*5,
+            color: ['#e94560','#f39c12','#ffe066','#fff'][Math.floor(Math.random()*4)] });
+    }
+    shakeTimer = 0.2;
+}
+
+function spawnDust(x, y) {
+    for (let i = 0; i < 2; i++) {
+        particles.push({ x: x-10+Math.random()*20, y: y+Math.random()*5, vx: -30-Math.random()*50, vy: -10-Math.random()*30,
+            life: 0.3+Math.random()*0.3, maxLife: 0.3+Math.random()*0.3, size: 3+Math.random()*6, color: '#d4b896' });
+    }
+}
+
+// ===== STARS =====
+function createStars() {
+    stars = [];
+    for (let i = 0; i < 80; i++) stars.push({ x: Math.random()*W, y: Math.random()*H*0.5, size: 0.5+Math.random()*2, twinkle: Math.random()*Math.PI*2, speed: 0.5+Math.random()*2 });
+}
+
+// ===== SKYLINE =====
+function drawDubaiSkyline(prog) {
+    const gy = H * 0.85;
+    const op = Math.max(0, 1 - prog * 1.5);
+    if (op > 0) {
+        ctx.globalAlpha = op;
+        const bx = W * 0.7 - prog * W * 0.3, bh = H * 0.55;
+        ctx.beginPath();
+        ctx.moveTo(bx-8,gy); ctx.lineTo(bx-25,gy-bh*0.4); ctx.lineTo(bx-15,gy-bh*0.6);
+        ctx.lineTo(bx-8,gy-bh*0.75); ctx.lineTo(bx-3,gy-bh); ctx.lineTo(bx+3,gy-bh);
+        ctx.lineTo(bx+8,gy-bh*0.75); ctx.lineTo(bx+15,gy-bh*0.6); ctx.lineTo(bx+25,gy-bh*0.4);
+        ctx.lineTo(bx+8,gy); ctx.closePath(); ctx.fillStyle='#16213e'; ctx.fill();
+        [{x:.15,w:30,h:.3},{x:.25,w:25,h:.35},{x:.35,w:35,h:.25},{x:.45,w:20,h:.4},{x:.55,w:28,h:.32},{x:.8,w:22,h:.28},{x:.9,w:30,h:.22}].forEach(t => {
+            const tx=W*t.x-prog*W*0.2, th=H*t.h;
+            ctx.fillStyle='#16213e'; ctx.fillRect(tx-t.w/2, gy-th, t.w, th);
+            for(let wy=gy-th+10;wy<gy-10;wy+=15) for(let wx=tx-t.w/2+5;wx<tx+t.w/2-5;wx+=8) if(Math.random()>0.4) { ctx.fillStyle=`rgba(255,220,100,${0.3+Math.random()*0.5})`; ctx.fillRect(wx,wy,3,6); }
+        });
+        ctx.globalAlpha = 1;
+    }
+    // Portugal landscape
+    const po = Math.max(0, (prog - 0.5) * 2);
+    if (po > 0) {
+        ctx.globalAlpha = po;
+
+        // Ocean in background (right side — Atlantic coast)
+        const oceanG = ctx.createLinearGradient(W * 0.7, gy * 0.3, W, gy * 0.7);
+        oceanG.addColorStop(0, 'rgba(52,152,219,0.0)');
+        oceanG.addColorStop(0.3, `rgba(52,152,219,${po * 0.3})`);
+        oceanG.addColorStop(1, `rgba(41,128,185,${po * 0.5})`);
+        ctx.fillStyle = oceanG;
+        ctx.fillRect(W * 0.65, gy * 0.3, W * 0.35, gy * 0.55);
+
+        // Sun (warm Portuguese sun)
+        if (po > 0.3) {
+            const sunX = W * 0.8, sunY = gy * 0.2;
+            const sunR = Math.min(W, H) * 0.08;
+            const sunG = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunR * 2.5);
+            sunG.addColorStop(0, `rgba(255,220,80,${po * 0.9})`);
+            sunG.addColorStop(0.3, `rgba(255,200,50,${po * 0.4})`);
+            sunG.addColorStop(1, 'rgba(255,180,30,0)');
+            ctx.fillStyle = sunG;
+            ctx.beginPath(); ctx.arc(sunX, sunY, sunR * 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,230,100,${po})`; ctx.fill();
+        }
+
+        // Rolling green hills
+        ctx.fillStyle = `rgba(76,175,80,${po * 0.5})`;
+        ctx.beginPath(); ctx.moveTo(0, gy);
+        ctx.quadraticCurveTo(W * 0.15, gy - H * 0.12, W * 0.3, gy - H * 0.04);
+        ctx.quadraticCurveTo(W * 0.5, gy - H * 0.15, W * 0.7, gy - H * 0.06);
+        ctx.quadraticCurveTo(W * 0.85, gy - H * 0.1, W, gy - H * 0.03);
+        ctx.lineTo(W, gy); ctx.closePath(); ctx.fill();
+
+        // Vineyard rows on hills
+        if (po > 0.4) {
+            ctx.globalAlpha = po * 0.35;
+            for (let row = 0; row < 4; row++) {
+                const ry = gy - H * 0.03 - row * H * 0.025;
+                for (let vx = W * 0.05; vx < W * 0.55; vx += 18) {
+                    ctx.fillStyle = '#2e7d32';
+                    ctx.beginPath(); ctx.arc(vx + Math.sin(row * 2 + vx * 0.01) * 5, ry, 3, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            ctx.globalAlpha = po;
+        }
+
+        // Portuguese buildings (terracotta roofs, pastel walls)
+        [{x:.12,w:38,h:.2,c:'#f5deb3'},{x:.25,w:32,h:.17,c:'#ffe4c4'},{x:.38,w:44,h:.23,c:'#f5deb3'},{x:.52,w:30,h:.18,c:'#faebd7'},{x:.65,w:38,h:.25,c:'#f5deb3'},{x:.78,w:28,h:.16,c:'#ffe4c4'},{x:.9,w:35,h:.21,c:'#faebd7'}].forEach(b => {
+            const bx=W*b.x+(1-prog)*W*0.2, bh=H*b.h;
+            ctx.fillStyle=b.c; ctx.fillRect(bx-b.w/2, gy-bh, b.w, bh);
+            // Terracotta roof
+            ctx.beginPath(); ctx.moveTo(bx-b.w/2-6,gy-bh); ctx.lineTo(bx,gy-bh-16); ctx.lineTo(bx+b.w/2+6,gy-bh);
+            ctx.closePath(); ctx.fillStyle='#c0392b'; ctx.fill();
+            // Windows with blue shutters
+            for(let wy=gy-bh+14;wy<gy-8;wy+=20) for(let wx=bx-b.w/2+7;wx<bx+b.w/2-7;wx+=13) {
+                ctx.fillStyle='#85c1e9'; ctx.fillRect(wx,wy,6,9);
+                ctx.fillStyle='#2874a6'; ctx.fillRect(wx-1.5,wy,1.5,9); ctx.fillRect(wx+6,wy,1.5,9);
+            }
+        });
+
+        // Portuguese flag on a pole
+        if (po > 0.5) {
+            const fx=W*0.5+(1-prog)*W*0.2, fy=gy-H*0.2-20;
+            // Flag pole
+            ctx.fillStyle='#888'; ctx.fillRect(fx-1, fy-5, 2, H*0.2+25);
+            // Flag
+            ctx.fillStyle='#006600'; ctx.fillRect(fx, fy, 10, 14);
+            ctx.fillStyle='#cc0000'; ctx.fillRect(fx+10, fy, 14, 14);
+            // Coat of arms (simplified yellow circle)
+            ctx.beginPath(); ctx.arc(fx+10, fy+7, 3, 0, Math.PI*2);
+            ctx.fillStyle='#ffd700'; ctx.fill();
+        }
+
+        // Palm trees / cypress trees
+        if (po > 0.2) {
+            [W*0.08, W*0.42, W*0.72, W*0.95].forEach(tx => {
+                const off = (1-prog)*W*0.15;
+                const treeX = tx + off;
+                // Trunk
+                ctx.fillStyle = '#6d4c28';
+                ctx.fillRect(treeX - 2, gy - H*0.12, 4, H*0.12);
+                // Canopy (cypress shape)
+                ctx.beginPath();
+                ctx.moveTo(treeX, gy - H*0.22);
+                ctx.quadraticCurveTo(treeX - 10, gy - H*0.12, treeX - 6, gy - H*0.05);
+                ctx.lineTo(treeX + 6, gy - H*0.05);
+                ctx.quadraticCurveTo(treeX + 10, gy - H*0.12, treeX, gy - H*0.22);
+                ctx.fillStyle = `rgba(34,120,50,${po * 0.7})`; ctx.fill();
+            });
+        }
+
+        // Azulejo tile decorations on buildings
+        if (po > 0.3) {
+            ctx.globalAlpha = po * 0.5;
+            for (let i = 0; i < 25; i++) {
+                const tx = Math.random() * W;
+                const ty = gy - Math.random() * H * 0.18;
+                ctx.fillStyle = '#1a5276';
+                ctx.fillRect(tx, ty, 4, 4);
+                ctx.fillStyle = '#aed6f1';
+                ctx.fillRect(tx + 1, ty + 1, 2, 2);
+            }
+        }
+        ctx.globalAlpha = 1;
+    }
+}
+
+function drawSky(prog) {
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.85);
+    // In Portugal entrance/eating, show a warm sunny sky
+    const inPortugal = (state === ENTERING_PORTUGAL || state === EATING_NATA);
+    if (inPortugal) {
+        g.addColorStop(0, 'rgb(85,170,240)');
+        g.addColorStop(0.5, 'rgb(135,200,250)');
+        g.addColorStop(1, 'rgb(255,220,140)');
+    } else {
+        g.addColorStop(0, `rgb(${26+prog*60|0},${26+prog*100|0},${46+prog*150|0})`);
+        g.addColorStop(0.6, `rgb(${233-prog*120|0},${69+prog*130|0},${96+prog*80|0})`);
+        g.addColorStop(1, `rgb(${(233-prog*120)*0.8|0},${(69+prog*130)*0.7|0},${(96+prog*80)*0.6|0})`);
+    }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+function drawStars(prog) {
+    const a = Math.max(0, 1 - prog * 2);
+    if (a <= 0) return;
+    stars.forEach(s => {
+        const tw = (Math.sin(elapsed * s.speed + s.twinkle) + 1) / 2;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.size * tw, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${tw * 0.8 * a})`; ctx.fill();
+    });
+}
+
+function drawGround(prog) {
+    const gy = H * 0.85;
+    const g = ctx.createLinearGradient(0, gy, 0, H);
+    const inPortugal = (state === ENTERING_PORTUGAL || state === EATING_NATA);
+    if (inPortugal) {
+        // Lush green Portuguese ground with cobblestone path
+        g.addColorStop(0, 'rgb(100,160,70)');
+        g.addColorStop(1, 'rgb(60,110,40)');
+        ctx.fillStyle = g; ctx.fillRect(0, gy, W, H - gy);
+        // Cobblestone road strip
+        ctx.fillStyle = 'rgba(180,170,150,0.6)';
+        ctx.fillRect(0, gy, W, 8);
+        // Calcada portuguesa pattern (small white/dark stones)
+        for (let sx = 0; sx < W; sx += 12) {
+            ctx.fillStyle = (sx / 12 | 0) % 2 ? 'rgba(240,235,220,0.5)' : 'rgba(80,75,65,0.4)';
+            ctx.fillRect(sx, gy, 6, 4);
+            ctx.fillStyle = (sx / 12 | 0) % 2 ? 'rgba(80,75,65,0.4)' : 'rgba(240,235,220,0.5)';
+            ctx.fillRect(sx, gy + 4, 6, 4);
+        }
+    } else {
+        const r=194-prog*60|0, gr=178-prog*50|0, b=128+prog*30|0;
+        g.addColorStop(0, `rgb(${r},${gr},${b})`);
+        g.addColorStop(1, `rgb(${r*0.6|0},${gr*0.7|0},${b*0.5|0})`);
+        ctx.fillStyle = g; ctx.fillRect(0, gy, W, H - gy);
+        ctx.fillStyle = '#333'; ctx.fillRect(0, gy, W, 5);
+    }
+}
+
+// ===== HUD =====
+function drawHUD() {
+    const pad = 12;
+    const barW = W - pad * 2;
+    const barH = isPortrait ? 16 : 20;
+    const barY = pad;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.roundRect(pad, barY, barW, barH, 8); ctx.fill();
+
+    const g = ctx.createLinearGradient(pad, 0, pad + barW, 0);
+    g.addColorStop(0, '#e94560'); g.addColorStop(0.5, '#f39c12'); g.addColorStop(1, '#2ecc71');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.roundRect(pad, barY, Math.max(1, barW * progress), barH, 8); ctx.fill();
+
+    const fontSize = isPortrait ? 10 : 11;
+    ctx.font = `bold ${fontSize}px system-ui`;
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'left'; ctx.fillText('DUBAI', pad + 4, barY + barH - 4);
+    ctx.textAlign = 'right'; ctx.fillText('PORTUGAL', pad + barW - 4, barY + barH - 4);
+
+    // Pastel de Nata icon at end of progress bar
+    ctx.textAlign = 'center';
+    ctx.font = `${isPortrait ? 12 : 14}px system-ui`;
+    ctx.fillText('\uD83E\uDD50', pad + barW - 2, barY + barH - 2);
+
+    // Runner icon
+    const rx = pad + barW * progress;
+    ctx.fillText('\uD83C\uDFC3', rx, barY + barH - 2);
+
+    const statY = barY + barH + (isPortrait ? 16 : 20);
+    const statFont = isPortrait ? 13 : 16;
+    ctx.textAlign = 'left'; ctx.font = `bold ${statFont}px system-ui`;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText(`${(progress * TOTAL_DISTANCE | 0).toLocaleString()} km`, pad, statY);
+    ctx.textAlign = 'right';
+    ctx.fillText(`Score: ${score.toLocaleString()}`, W - pad, statY);
+    ctx.textAlign = 'center'; ctx.font = `${isPortrait ? 11 : 13}px system-ui`;
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText(`Rockets Dodged: ${rocketsDodged}`, W / 2, statY);
+
+    // BEEP BEEP
+    if (beepTimer > 0) {
+        ctx.save();
+        const sz = Math.floor((isPortrait ? 22 : 28) + beepTimer * 20);
+        ctx.font = `bold ${sz}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = `rgba(0,0,0,${beepTimer * 0.5})`; ctx.lineWidth = 4;
+        ctx.strokeText('BEEP BEEP!', W / 2, H * 0.35);
+        ctx.fillStyle = `rgba(243,156,18,${beepTimer})`;
+        ctx.fillText('BEEP BEEP!', W / 2, H * 0.35);
+        ctx.restore();
+    }
+
+    // Lawyer messages
+    lawyerMessages.forEach(m => {
+        ctx.save();
+        ctx.font = `bold ${isPortrait ? 12 : 15}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = `rgba(255,255,255,${m.alpha})`;
+        ctx.strokeStyle = `rgba(0,0,0,${m.alpha * 0.5})`; ctx.lineWidth = 3;
+        ctx.strokeText(m.text, m.x, m.y);
+        ctx.fillText(m.text, m.x, m.y);
+        ctx.restore();
+    });
+}
+
+// ===== CONFETTI =====
+function spawnConfetti() {
+    for (let i = 0; i < 150; i++) confetti.push({
+        x: Math.random()*W, y: -20-Math.random()*H, vx: (Math.random()-0.5)*100, vy: 100+Math.random()*200,
+        size: 4+Math.random()*8, rotation: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*10,
+        color: ['#e94560','#f39c12','#2ecc71','#3498db','#9b59b6','#006600','#cc0000'][Math.floor(Math.random()*7)]
+    });
+}
+
+// ===== INPUT =====
+var keys = {}, touchSide = 0;
+
+document.addEventListener('keydown', e => {
+    keys[e.key] = true;
+    if ((e.key === ' ' || e.key === 'Enter') && state !== PLAYING) startGame();
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault(); initAudio();
+    touchSide = e.touches[0].clientX < W / 2 ? -1 : 1;
+    if (state !== PLAYING) startGame();
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault(); touchSide = e.touches[0].clientX < W / 2 ? -1 : 1;
+}, { passive: false });
+canvas.addEventListener('touchend', e => { e.preventDefault(); touchSide = 0; }, { passive: false });
+
+canvas.addEventListener('mousedown', e => { initAudio(); if (state === PLAYING) touchSide = e.clientX < W / 2 ? -1 : 1; });
+canvas.addEventListener('mouseup', () => { touchSide = 0; });
+
+// ===== GAME FUNCTIONS =====
+function startGame() {
+    initAudio();
+    document.getElementById('menuOverlay').classList.remove('active');
+    document.getElementById('gameOverOverlay').classList.remove('active');
+    document.getElementById('winOverlay').classList.remove('active');
+
+    state = PLAYING; score = 0; rocketsDodged = 0; progress = 0; elapsed = 0;
+    topSpeed = 0; beepTimer = 0; beepCooldown = 0; lastTime = 0;
+    player = createPlayer(); coyote = null; coyoteDivers = []; nextCoyoteTime = 6;
+    rockets = []; particles = []; speedLines = []; confetti = [];
+    lawyers = []; lawyerMessages = []; pastelDeNata = null;
+    redCarpet = null; enterPortugalTimer = 0; eatingTimer = 0; eatingPhase = 0;
+    createStars();
+
+    // Schedule lawyer appearances at different progress points
+    const lawyerSpawns = [0.12, 0.28, 0.45, 0.62, 0.78, 0.90];
+    lawyerSpawns.forEach((p, i) => {
+        lawyers.push({
+            triggerProgress: p,
+            x: W * (0.6 + Math.random() * 0.3),
+            y: H * 0.82,
+            size: Math.min(W, H) * 0.12,
+            alpha: 0,
+            shown: false,
+            quoteIndex: i % LAWYER_QUOTES.length,
+            timer: 0
+        });
+    });
+
+    ensureLoop();
+    setTimeout(() => playBeepBeep(), 300);
+}
+
+function enterPortugal() {
+    state = ENTERING_PORTUGAL;
+    enterPortugalTimer = 0;
+    // Clear all rockets and coyotes
+    rockets.forEach(r => spawnExplosion(r.x, r.y));
+    rockets = [];
+    coyoteDivers = [];
+    // Place pastel de nata at end of red carpet
+    pastelDeNata = { x: W * 0.88, y: H * 0.82, size: Math.min(W, H) * 0.12, pulse: 0 };
+    playWinSound();
+    beepTimer = 1.5; playBeepBeep();
+}
+
+function gameOver() {
+    state = GAME_OVER;
+    playExplosionSound();
+    const dist = progress * TOTAL_DISTANCE | 0, pct = progress * 100 | 0;
+    document.getElementById('goDistance').textContent = `${dist.toLocaleString()} km`;
+    document.getElementById('goDistStat').textContent = `${dist.toLocaleString()} km`;
+    document.getElementById('goDodged').textContent = rocketsDodged;
+    document.getElementById('goSpeed').textContent = `${topSpeed.toLocaleString()} km/h`;
+    document.getElementById('goScore').textContent = score.toLocaleString();
+    document.getElementById('goProgress').textContent = `You made it ${pct}% of the way to Portugal`;
+    setTimeout(() => document.getElementById('gameOverOverlay').classList.add('active'), 100);
+}
+
+function winGame() {
+    state = WIN;
+    playWinSound();
+    setTimeout(() => playBeepBeep(), 500);
+    spawnConfetti();
+    document.getElementById('winDodged').textContent = rocketsDodged;
+    document.getElementById('winScore').textContent = score.toLocaleString();
+    setTimeout(() => document.getElementById('winOverlay').classList.add('active'), 100);
+}
+
+// ===== SHARE =====
+function getShareText() {
+    const dist = progress * TOTAL_DISTANCE | 0, pct = progress * 100 | 0, won = state === WIN;
+    let t = won
+        ? `BEEP BEEP! The Road Runner reached the Pastel de Nata in Portugal! \uD83C\uDDF5\uD83C\uDDF9\uD83E\uDD50\n\n`
+        : `I helped the Road Runner sprint ${dist.toLocaleString()} km (${pct}% to Portugal) dodging rockets!\n\n`;
+    t += `\uD83D\uDE80 Rockets Dodged: ${rocketsDodged}\n\uD83D\uDCCF Distance: ${dist.toLocaleString()} km\n\uD83C\uDFC6 Score: ${score.toLocaleString()}\n\n`;
+    t += `Can you beat my score? Try it yourself!\n\n#EscapeToPortugal #RoadRunner #DubaiToPortugal #LinkedInGames`;
+    return t;
+}
+
+function shareLinkedIn() {
+    window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(getShareText())}`, '_blank');
+}
+
+function copyScore() {
+    navigator.clipboard.writeText(getShareText()).then(() => {
+        const btn = event.target;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Score', 2000);
+    });
+}
+
+// ===== UPDATE =====
+function update(dt) {
+    if (state === PLAYING) {
+        elapsed += dt;
+        progress = Math.min(1, elapsed / GAME_DURATION);
+        const spd = 200 + progress * 600 | 0;
+        topSpeed = Math.max(topSpeed, spd);
+        score = (progress * TOTAL_DISTANCE * 10 | 0) + rocketsDodged * 50;
+
+        // Player
+        let dir = 0;
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) dir = -1;
+        if (keys['ArrowRight'] || keys['d'] || keys['D']) dir = 1;
+        if (touchSide) dir = touchSide;
+        player.x += dir * W * 0.8 * dt;
+        player.x = Math.max(player.w, Math.min(W - player.w, player.x));
+        player.legFrame += dt * (18 + progress * 25);
+        if (Math.random() < 0.3) spawnDust(player.x - 15, player.y + player.h * 0.35);
+
+        // Coyote dive-bombers
+        nextCoyoteTime -= dt;
+        if (nextCoyoteTime <= 0) {
+            spawnCoyoteDiver();
+            nextCoyoteTime = Math.max(2, 7 - progress * 5); // more frequent as game progresses
+        }
+        for (let i = coyoteDivers.length - 1; i >= 0; i--) {
+            const c = coyoteDivers[i];
+            c.y += c.vy * dt;
+            c.x += c.vx * dt;
+            c.legFrame += dt * 10;
+            c.reachFrame += dt * 5;
+            // Slight homing
+            c.vx += (player.x - c.x) * 0.5 * dt;
+            c.vx = Math.max(-100, Math.min(100, c.vx));
+
+            // Collision with player
+            const px = player.x, py = player.y - player.h * 0.2;
+            if (c.y > py - player.h * 0.8 && c.y < py + player.h * 0.4 &&
+                Math.abs(c.x - px) < player.w * 0.7) {
+                spawnExplosion(c.x, c.y);
+                coyoteDivers.splice(i, 1);
+                gameOver(); return;
+            }
+            // Missed - hit ground
+            if (c.y > H * 0.82) {
+                if (!c.missed) {
+                    c.missed = true;
+                    // Coyote crashes into ground (classic cartoon moment)
+                    spawnExplosion(c.x, H * 0.82);
+                    // Little dust cloud
+                    for (let j = 0; j < 8; j++) spawnDust(c.x + (Math.random()-0.5)*30, H * 0.82);
+                }
+                coyoteDivers.splice(i, 1);
+                continue;
+            }
+            if (c.x < -80 || c.x > W + 80) coyoteDivers.splice(i, 1);
+        }
+
+        // Lawyers
+        lawyers.forEach(l => {
+            if (!l.shown && progress >= l.triggerProgress) {
+                l.shown = true;
+                l.alpha = 1;
+                l.timer = 5;
+                l.touched = false;
+                playLawyerSound();
+                lawyerMessages.push({
+                    text: LAWYER_QUOTES[l.quoteIndex],
+                    x: l.x, y: l.y - l.size * 0.8,
+                    alpha: 1, vy: -30
+                });
+            }
+            if (l.shown && !l.touched && l.alpha > 0) {
+                // Check if player touches the lawyer
+                const dx = Math.abs(player.x - l.x);
+                const dy = Math.abs((player.y - player.h * 0.2) - l.y);
+                if (dx < player.w * 0.5 + l.size * 0.3 && dy < player.h * 0.5 + l.size * 0.3) {
+                    l.touched = true;
+                    l.alpha = 0;
+                    score += 500;
+                    playLawyerSound();
+                    // Show farewell message
+                    lawyerMessages.push({
+                        text: "See you in Portugal! \u2708\uFE0F",
+                        x: l.x, y: l.y - l.size * 0.5,
+                        alpha: 1.5, vy: -40
+                    });
+                    // Destroy all active rockets with explosions
+                    rockets.forEach(r => {
+                        spawnExplosion(r.x, r.y);
+                        rocketsDodged++;
+                    });
+                    rockets = [];
+                    // Screen flash
+                    shakeTimer = 0.15;
+                }
+            }
+            if (l.shown && !l.touched && l.timer > 0) {
+                l.timer -= dt;
+                if (l.timer < 1) l.alpha = l.timer;
+            }
+        });
+
+        // Lawyer messages float up and fade
+        for (let i = lawyerMessages.length - 1; i >= 0; i--) {
+            const m = lawyerMessages[i];
+            m.y += m.vy * dt;
+            m.alpha -= dt * 0.3;
+            if (m.alpha <= 0) lawyerMessages.splice(i, 1);
+        }
+
+        // Red carpet appears near the end, triggers Portugal entrance
+        if (progress > 0.85 && !redCarpet) {
+            redCarpet = { x: W * 0.75, width: W * 0.25, alpha: 0 };
+        }
+        if (redCarpet) {
+            redCarpet.alpha = Math.min(1, redCarpet.alpha + dt * 2);
+        }
+
+        // Rockets
+        const rate = 1.2 + progress * 4.5;
+        if (Math.random() < rate * dt) spawnRocket();
+        if (beepCooldown > 0) beepCooldown -= dt;
+
+        for (let i = rockets.length - 1; i >= 0; i--) {
+            const r = rockets[i];
+            if (r.homing) { const dx = player.x - r.x; r.vx += Math.sign(dx) * 140 * dt; r.vx = Math.max(-180, Math.min(180, r.vx)); }
+            r.x += r.vx * dt; r.y += r.vy * dt;
+            r.trail.push({ x: r.x, y: r.y, alpha: 0.8, size: 4 + Math.random() * 3 });
+            if (r.trail.length > 10) r.trail.shift();
+            r.trail.forEach(t => { t.alpha -= dt * 3; t.size -= dt * 5; });
+
+            const px = player.x, py = player.y - player.h * 0.2;
+            if (r.x > px - player.w * 0.5 && r.x < px + player.w * 0.5 && r.y > py - player.h * 0.6 && r.y < py + player.h * 0.6) {
+                spawnExplosion(r.x, r.y); rockets.splice(i, 1); gameOver(); return;
+            }
+            if (!r.dodged && r.y > player.y + 20) {
+                r.dodged = true; rocketsDodged++;
+                if (Math.abs(r.x - player.x) < player.w * 1.8 && beepCooldown <= 0) {
+                    beepTimer = 1.2; playBeepBeep(); beepCooldown = 1.5; score += 25;
+                }
+            }
+            if (r.y > H * 0.85) { spawnExplosion(r.x, H * 0.85); playExplosionSound(); rockets.splice(i, 1); continue; }
+            if (r.x < -50 || r.x > W + 50) rockets.splice(i, 1);
+        }
+
+        // Periodic beep
+        if (beepCooldown <= 0 && elapsed > 2 && Math.random() < dt * 0.12) {
+            beepTimer = 0.8; playBeepBeep(); beepCooldown = 5;
+        }
+
+        if (progress >= 1) { enterPortugal(); return; }
+    }
+
+    // Entering Portugal sequence: Road Runner walks on red carpet toward pastel de nata
+    if (state === ENTERING_PORTUGAL) {
+        enterPortugalTimer += dt;
+        player.legFrame += dt * 8; // slow, triumphant walk
+
+        // Brief pause at start to let player see the scene (1s pause)
+        if (enterPortugalTimer > 1.0 && pastelDeNata) {
+            const targetX = pastelDeNata.x;
+            const dx = targetX - player.x;
+            // Slow walk speed — W * 0.12 per second
+            player.x += Math.sign(dx) * Math.min(Math.abs(dx), W * 0.12 * dt);
+            pastelDeNata.pulse += dt * 3;
+            // Check if road runner reached the pastel de nata
+            if (Math.abs(player.x - pastelDeNata.x) < player.w * 0.5) {
+                state = EATING_NATA;
+                eatingTimer = 0;
+                eatingPhase = 0;
+            }
+        }
+        if (pastelDeNata) pastelDeNata.pulse += dt * 3;
+    }
+
+    // Eating pastel de nata sequence
+    if (state === EATING_NATA) {
+        eatingTimer += dt;
+        player.legFrame += dt * 2;
+        if (pastelDeNata) pastelDeNata.pulse += dt * 3;
+        if (eatingPhase === 0 && eatingTimer > 0.8) {
+            eatingPhase = 1; // start eating
+            eatingTimer = 0;
+        }
+        if (eatingPhase === 1 && eatingTimer > 2.0) {
+            eatingPhase = 2; // done eating
+            pastelDeNata = null;
+            eatingTimer = 0;
+            spawnConfetti();
+            playBeepBeep();
+        }
+        if (eatingPhase === 2 && eatingTimer > 2.0) {
+            winGame();
+        }
+    }
+
+    // Particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 200 * dt; p.life -= dt;
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+    // Confetti
+    for (let i = confetti.length - 1; i >= 0; i--) {
+        const c = confetti[i]; c.x += c.vx * dt; c.y += c.vy * dt; c.rotation += c.rotSpeed * dt;
+        if (c.y > H + 20) confetti.splice(i, 1);
+    }
+    if (shakeTimer > 0) { shakeTimer -= dt; shakeX = (Math.random()-0.5)*10; shakeY = (Math.random()-0.5)*10; }
+    else { shakeX = shakeY = 0; }
+    if (beepTimer > 0) beepTimer -= dt * 1.5;
+    updateSpeedLines(dt);
+}
+
+// ===== RENDER =====
+function render() {
+    ctx.save();
+    ctx.translate(shakeX, shakeY);
+    const prog = state === MENU ? 0 : progress;
+
+    drawSky(prog);
+    drawStars(prog);
+    drawDubaiSkyline(prog);
+    drawGround(prog);
+
+    if (state === PLAYING || state === GAME_OVER || state === WIN || state === ENTERING_PORTUGAL || state === EATING_NATA) {
+        drawSpeedLines();
+        rockets.forEach(r => drawRocket(r));
+
+        // Red carpet for Portugal entrance
+        if (redCarpet && redCarpet.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = redCarpet.alpha;
+            const gy = H * 0.85;
+            const carpetY = gy - 6;
+            const carpetH = 12;
+            // Red carpet with gold trim
+            ctx.fillStyle = '#b71c1c';
+            ctx.fillRect(redCarpet.x, carpetY, redCarpet.width, carpetH);
+            // Gold borders
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(redCarpet.x, carpetY, redCarpet.width, 2);
+            ctx.fillRect(redCarpet.x, carpetY + carpetH - 2, redCarpet.width, 2);
+            // Gold tassels at start
+            for (let i = 0; i < 3; i++) {
+                ctx.fillStyle = '#ffd700';
+                ctx.fillRect(redCarpet.x - 2, carpetY + i * 4, 4, 3);
+            }
+            // "PORTUGAL" text on carpet
+            ctx.font = `bold ${isPortrait ? 10 : 13}px system-ui`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText('WELCOME TO PORTUGAL', redCarpet.x + redCarpet.width * 0.5, carpetY + carpetH - 2);
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        }
+
+        // Lawyers
+        lawyers.forEach(l => {
+            if (l.shown && l.alpha > 0) {
+                ctx.globalAlpha = l.alpha;
+                drawLawyer(l);
+                ctx.globalAlpha = 1;
+            }
+        });
+
+        // Pastel de Nata at finish
+        if (pastelDeNata) {
+            const pulse = 1 + Math.sin(pastelDeNata.pulse) * 0.08;
+            // During eating, shrink the nata
+            let nataScale = pulse;
+            if (state === EATING_NATA && eatingPhase === 1) {
+                nataScale *= Math.max(0, 1 - eatingTimer / 1.2);
+            }
+            if (nataScale > 0.01) {
+                drawPastelDeNata(pastelDeNata.x, pastelDeNata.y - 10, pastelDeNata.size * nataScale);
+            }
+            // Label
+            ctx.save();
+            ctx.font = `bold ${isPortrait ? 11 : 14}px system-ui`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = `rgba(255,220,100,${0.7 + Math.sin(pastelDeNata.pulse) * 0.3})`;
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 3;
+            ctx.strokeText('PASTEL DE NATA!', pastelDeNata.x, pastelDeNata.y - pastelDeNata.size * 0.8);
+            ctx.fillText('PASTEL DE NATA!', pastelDeNata.x, pastelDeNata.y - pastelDeNata.size * 0.8);
+            ctx.restore();
+        }
+
+        // "Yum!" text during eating
+        if (state === EATING_NATA && eatingPhase >= 1) {
+            ctx.save();
+            const yumAlpha = eatingPhase === 1 ? Math.min(1, eatingTimer * 3) : Math.max(0, 1 - eatingTimer);
+            ctx.font = `bold ${isPortrait ? 20 : 28}px system-ui`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = `rgba(255,220,100,${yumAlpha})`;
+            ctx.strokeStyle = `rgba(0,0,0,${yumAlpha * 0.5})`; ctx.lineWidth = 4;
+            const yumText = eatingPhase === 2 ? 'BEEP BEEP! DELICIOUS!' : 'NOM NOM NOM!';
+            ctx.strokeText(yumText, player.x, player.y - player.h * 1.2 - Math.sin(eatingTimer * 5) * 5);
+            ctx.fillText(yumText, player.x, player.y - player.h * 1.2 - Math.sin(eatingTimer * 5) * 5);
+            ctx.restore();
+        }
+
+        // "Welcome to Portugal!" banner during entrance
+        if (state === ENTERING_PORTUGAL && enterPortugalTimer > 0.5) {
+            ctx.save();
+            const bannerAlpha = Math.min(1, (enterPortugalTimer - 0.5) * 2);
+            ctx.font = `bold ${isPortrait ? 20 : 32}px system-ui`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = `rgba(46,204,113,${bannerAlpha})`;
+            ctx.strokeStyle = `rgba(0,0,0,${bannerAlpha * 0.5})`; ctx.lineWidth = 4;
+            ctx.strokeText('\uD83C\uDDF5\uD83C\uDDF9 PORTUGAL! \uD83C\uDDF5\uD83C\uDDF9', W / 2, H * 0.3);
+            ctx.fillText('\uD83C\uDDF5\uD83C\uDDF9 PORTUGAL! \uD83C\uDDF5\uD83C\uDDF9', W / 2, H * 0.3);
+            ctx.restore();
+        }
+
+        // Coyote divers
+        coyoteDivers.forEach(c => drawCoyoteDiver(c));
+        if (player) drawRoadRunner(player);
+
+        particles.forEach(p => {
+            const a = p.life / p.maxLife;
+            ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0, p.size * a), 0, Math.PI * 2);
+            ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.fill(); ctx.globalAlpha = 1;
+        });
+
+        drawHUD();
+    }
+
+    // Menu
+    if (state === MENU) {
+        const sz = Math.min(W, H);
+        drawRoadRunner({ x: W * 0.55, y: H * 0.72, w: sz * 0.07, h: sz * 0.1, legFrame: elapsed * 18 });
+        drawCoyoteDiver({ x: W * 0.35, y: H * 0.55 + Math.sin(elapsed * 2) * 15, w: sz * 0.07, h: sz * 0.1, legFrame: elapsed * 10, reachFrame: elapsed * 3 });
+        // Mini lawyer on menu
+        drawLawyer({ x: W * 0.78, y: H * 0.76, size: sz * 0.08 });
+        // Mini pastel de nata
+        drawPastelDeNata(W * 0.9, H * 0.78, sz * 0.06);
+    }
+
+    // Confetti
+    confetti.forEach(c => {
+        ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rotation);
+        ctx.fillStyle = c.color; ctx.fillRect(-c.size/2, -c.size/4, c.size, c.size/2);
+        ctx.restore();
+    });
+
+    ctx.restore();
+}
+
+// ===== GAME LOOP =====
+var loopRunning = false;
+function gameLoop(timestamp) {
+    try {
+        if (lastTime === 0) lastTime = timestamp;
+        const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+        lastTime = timestamp;
+        if (state === MENU) elapsed += dt;
+        update(dt);
+        render();
+    } catch(e) { console.error('Game loop error:', e); }
+    requestAnimationFrame(gameLoop);
+}
+
+function ensureLoop() {
+    if (!loopRunning) { loopRunning = true; lastTime = 0; requestAnimationFrame(gameLoop); }
+}
+
+createStars();
+ensureLoop();
+</script>
+</body>
+</html>
