@@ -1093,18 +1093,21 @@ function getShareText() {
 function shareLinkedIn() {
     const text = getShareText();
     const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
-    // Copy score to clipboard first so user can paste into LinkedIn post
-    navigator.clipboard.writeText(text + '\n\n' + gameUrl).catch(() => {});
-    // Open LinkedIn create post page — works on both mobile web and desktop
-    const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text + '\n\n' + gameUrl)}`;
-    // Use location.href on mobile (avoids popup blockers), window.open on desktop
+    const fullText = text + '\n\n' + gameUrl;
+    // Copy score to clipboard
+    navigator.clipboard.writeText(fullText).catch(() => {});
     const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
     if (isMobile) {
-        // Brief alert so user knows text is copied, then redirect
-        alert('Score copied to clipboard! LinkedIn will open — just paste into your post.');
-        window.location.href = url;
+        // On mobile: copy text, then open LinkedIn share URL
+        // shareArticle URL opens the share composer in the LinkedIn app
+        const url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(gameUrl)}&title=${encodeURIComponent('Escape to Portugal - Road Runner Game')}&summary=${encodeURIComponent(text)}`;
+        alert('Score copied to clipboard!\n\nLinkedIn will open — tap to create a post and paste your score.');
+        const a = document.createElement('a');
+        a.href = url; a.target = '_blank'; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
     } else {
-        window.open(url, '_blank');
+        // Desktop: feed URL with shareActive works and pre-fills text
+        window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(fullText)}`, '_blank');
     }
 }
 
