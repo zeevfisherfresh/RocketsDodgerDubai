@@ -1093,20 +1093,19 @@ function getShareText() {
 function shareLinkedIn() {
     const text = getShareText();
     const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
-    // LinkedIn app URL scheme — opens LinkedIn directly on iPhone with pre-filled text
-    const linkedInUrl = `linkedin://shareArticle?mini=true&url=${encodeURIComponent(gameUrl)}&summary=${encodeURIComponent(text)}`;
-    const webUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text + '\n\n' + gameUrl)}`;
-    // Try LinkedIn app first, fall back to web
-    const start = Date.now();
-    const a = document.createElement('a');
-    a.href = linkedInUrl;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    // If app didn't open within 1.5s, open web version
-    setTimeout(() => {
-        if (Date.now() - start < 2000) {
-            window.location.href = webUrl;
-        }
-    }, 1500);
+    // Copy score to clipboard first so user can paste into LinkedIn post
+    navigator.clipboard.writeText(text + '\n\n' + gameUrl).catch(() => {});
+    // Open LinkedIn create post page — works on both mobile web and desktop
+    const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text + '\n\n' + gameUrl)}`;
+    // Use location.href on mobile (avoids popup blockers), window.open on desktop
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+        // Brief alert so user knows text is copied, then redirect
+        alert('Score copied to clipboard! LinkedIn will open — just paste into your post.');
+        window.location.href = url;
+    } else {
+        window.open(url, '_blank');
+    }
 }
 
 function copyScore() {
