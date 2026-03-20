@@ -1091,18 +1091,22 @@ function getShareText() {
 }
 
 function shareLinkedIn() {
-    const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
     const text = getShareText();
-    // Try native share first (works great on iPhone)
-    if (navigator.share) {
-        navigator.share({ title: 'Escape to Portugal - Road Runner Game', text: text, url: gameUrl }).catch(() => {});
-    } else {
-        // Fallback: LinkedIn share endpoint with URL
-        const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(gameUrl)}`;
-        const a = document.createElement('a');
-        a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }
+    const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
+    // LinkedIn app URL scheme — opens LinkedIn directly on iPhone with pre-filled text
+    const linkedInUrl = `linkedin://shareArticle?mini=true&url=${encodeURIComponent(gameUrl)}&summary=${encodeURIComponent(text)}`;
+    const webUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text + '\n\n' + gameUrl)}`;
+    // Try LinkedIn app first, fall back to web
+    const start = Date.now();
+    const a = document.createElement('a');
+    a.href = linkedInUrl;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    // If app didn't open within 1.5s, open web version
+    setTimeout(() => {
+        if (Date.now() - start < 2000) {
+            window.location.href = webUrl;
+        }
+    }, 1500);
 }
 
 function copyScore() {
