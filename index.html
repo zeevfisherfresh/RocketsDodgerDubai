@@ -1003,6 +1003,7 @@ canvas.addEventListener('mouseup', () => { touchSide = 0; });
 
 // ===== GAME FUNCTIONS =====
 function startGame() {
+    if (!canRestart && state !== MENU) return; // prevent accidental restart on mobile
     initAudio();
     document.getElementById('menuOverlay').classList.remove('active');
     document.getElementById('gameOverOverlay').classList.remove('active');
@@ -1048,8 +1049,11 @@ function enterPortugal() {
     beepTimer = 1.5; playBeepBeep();
 }
 
+var canRestart = true; // prevents accidental instant restart on mobile
+
 function gameOver() {
     state = GAME_OVER;
+    canRestart = false;
     playExplosionSound();
     const dist = progress * TOTAL_DISTANCE | 0, pct = progress * 100 | 0;
     document.getElementById('goDistance').textContent = `${dist.toLocaleString()} km`;
@@ -1058,17 +1062,20 @@ function gameOver() {
     document.getElementById('goSpeed').textContent = `${topSpeed.toLocaleString()} km/h`;
     document.getElementById('goScore').textContent = score.toLocaleString();
     document.getElementById('goProgress').textContent = `You made it ${pct}% of the way to Portugal`;
-    setTimeout(() => document.getElementById('gameOverOverlay').classList.add('active'), 100);
+    setTimeout(() => document.getElementById('gameOverOverlay').classList.add('active'), 800);
+    setTimeout(() => { canRestart = true; }, 1500);
 }
 
 function winGame() {
     state = WIN;
+    canRestart = false;
     playWinSound();
     setTimeout(() => playBeepBeep(), 500);
     spawnConfetti();
     document.getElementById('winDodged').textContent = rocketsDodged;
     document.getElementById('winScore').textContent = score.toLocaleString();
-    setTimeout(() => document.getElementById('winOverlay').classList.add('active'), 100);
+    setTimeout(() => document.getElementById('winOverlay').classList.add('active'), 800);
+    setTimeout(() => { canRestart = true; }, 1500);
 }
 
 // ===== SHARE =====
@@ -1083,7 +1090,15 @@ function getShareText() {
 }
 
 function shareLinkedIn() {
-    window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(getShareText())}`, '_blank');
+    const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(getShareText())}`;
+    // Use a temporary link click — window.open gets blocked on mobile
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
 function copyScore() {
