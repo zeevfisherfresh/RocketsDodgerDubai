@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Escape to Portugal - Dodge Rockets Game</title>
-    <meta property="og:title" content="Escape to Portugal - Dodge Rockets Game">
-    <meta property="og:description" content="Help the Road Runner dodge rockets in Dubai and escape to Portugal! Can you reach the Pastel de Nata?">
+    <title>RocketDodger by FRESH - Escape to Portugal</title>
+    <meta property="og:title" content="RocketDodger by FRESH - Escape to Portugal">
+    <meta property="og:description" content="Choose your villain - dodge rockets, ICE agents, or tax bills and escape to Portugal! Can you reach the Pastel de Nata?">
     <meta property="og:type" content="website">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,10 +23,16 @@
         .btn { display: inline-block; padding: 12px 32px; border: none; border-radius: 50px; font-size: clamp(14px, 3vw, 18px); font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 2px; margin: 5px; }
         .btn-play { background: linear-gradient(135deg, #e94560, #f39c12); color: white; box-shadow: 0 4px 25px rgba(233,69,96,0.5); }
         .btn-play:hover { transform: scale(1.05); box-shadow: 0 6px 35px rgba(233,69,96,0.7); }
-        .btn-share { background: #0077B5; color: white; box-shadow: 0 4px 20px rgba(0,119,181,0.4); font-size: clamp(12px, 2.5vw, 15px); }
-        .btn-share:hover { background: #005f8f; transform: scale(1.05); }
-        .btn-copy { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: clamp(11px, 2.3vw, 14px); padding: 8px 20px; }
-        .btn-copy:hover { background: rgba(255,255,255,0.25); }
+        .share-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .btn-social { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border: none; border-radius: 8px; font-size: clamp(11px, 2.3vw, 13px); font-weight: 600; cursor: pointer; transition: all 0.2s; color: white; font-family: inherit; }
+        .btn-social:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .btn-social svg { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
+        .btn-linkedin { background: #0077B5; }
+        .btn-facebook { background: #1877F2; }
+        .btn-instagram { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .btn-tiktok { background: #111; border: 1px solid #333; }
+        .btn-switch { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); font-size: clamp(11px, 2.3vw, 14px); padding: 8px 20px; }
+        .btn-switch:hover { background: rgba(255,255,255,0.25); }
         .score-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: clamp(10px, 2.5vw, 18px); margin: clamp(8px, 2vw, 14px) 0; backdrop-filter: blur(10px); }
         .stat { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: clamp(13px, 2.8vw, 17px); }
         .stat:last-child { border: none; }
@@ -34,6 +40,13 @@
         .stat-value { font-weight: 700; color: #f39c12; }
         .progress-label { font-size: clamp(11px, 2.5vw, 13px); color: #888; margin-top: 6px; }
         .controls-hint { font-size: clamp(10px, 2.3vw, 14px); color: #666; margin-top: 14px; }
+        .mode-cards { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+        .mode-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; background: rgba(255,255,255,0.06); cursor: pointer; transition: all 0.2s; text-align: left; color: white; font-family: inherit; width: 100%; }
+        .mode-card:hover { border-color: #f39c12; background: rgba(243,156,18,0.12); transform: scale(1.02); }
+        .mode-icon { font-size: clamp(28px, 6vw, 42px); flex-shrink: 0; width: 50px; text-align: center; }
+        .mode-info { flex: 1; }
+        .mode-name { font-size: clamp(14px, 3vw, 18px); font-weight: 700; margin-bottom: 2px; }
+        .mode-desc { font-size: clamp(11px, 2.3vw, 14px); color: #aaa; line-height: 1.3; }
         .win-title { color: #2ecc71 !important; text-shadow: 0 0 30px rgba(46,204,113,0.8) !important; }
         .beep-beep { font-size: clamp(18px, 4.5vw, 36px); color: #f39c12; font-weight: 900; font-style: italic; margin: 8px 0; text-shadow: 0 0 20px rgba(243,156,18,0.6); }
     </style>
@@ -45,11 +58,32 @@
     <div class="overlay active" id="menuOverlay">
         <div class="overlay-bg"></div>
         <div class="overlay-content">
-            <div class="beep-beep">BEEP BEEP!</div>
-            <h1>Escape to Portugal</h1>
-            <h2>Dubai Rocket Dodger</h2>
-            <p class="subtitle">Help the Road Runner dodge rockets and escape the Coyote! A FRESH lawyer will guide you to the Pastel de Nata!</p>
-            <button class="btn btn-play" onclick="startGame()">RUN!</button>
+            <h1>RocketDodger</h1>
+            <h2>by FRESH</h2>
+            <p class="subtitle">Choose who you are running away from</p>
+            <div class="mode-cards">
+                <button class="mode-card" onclick="selectMode('khamenei')">
+                    <div class="mode-icon">&#x1F3C3;&#x1F680;</div>
+                    <div class="mode-info">
+                        <div class="mode-name">Ayatollah Khamenei</div>
+                        <div class="mode-desc">Living in Dubai, escaping rockets</div>
+                    </div>
+                </button>
+                <button class="mode-card" onclick="selectMode('trump')">
+                    <div class="mode-icon">&#x1F3C3;&#x1F6A8;</div>
+                    <div class="mode-info">
+                        <div class="mode-name">Donald Trump</div>
+                        <div class="mode-desc">Living in the US, escaping ICE agents</div>
+                    </div>
+                </button>
+                <button class="mode-card" onclick="selectMode('starmer')">
+                    <div class="mode-icon">&#x1F3C3;&#x1F4B7;</div>
+                    <div class="mode-info">
+                        <div class="mode-name">Keir Starmer</div>
+                        <div class="mode-desc">Living in the UK, escaping high taxes</div>
+                    </div>
+                </button>
+            </div>
             <p class="controls-hint">Arrow Keys / WASD / Tap left-right to move</p>
         </div>
     </div>
@@ -62,15 +96,20 @@
             <h2 id="goDistance">0 km</h2>
             <div class="score-card">
                 <div class="stat"><span class="stat-label">Distance</span><span class="stat-value" id="goDistStat">0 km</span></div>
-                <div class="stat"><span class="stat-label">Rockets Dodged</span><span class="stat-value" id="goDodged">0</span></div>
+                <div class="stat"><span class="stat-label" id="goDodgedLabel">Rockets Dodged</span><span class="stat-value" id="goDodged">0</span></div>
                 <div class="stat"><span class="stat-label">Top Speed</span><span class="stat-value" id="goSpeed">0 km/h</span></div>
                 <div class="stat"><span class="stat-label">Total Score</span><span class="stat-value" id="goScore">0</span></div>
             </div>
             <p class="progress-label" id="goProgress">You made it 0% of the way to Portugal</p>
             <div style="margin-top:12px">
-                <button class="btn btn-play" onclick="startGame()">Try Again</button><br>
-                <button class="btn btn-share" onclick="shareLinkedIn()">Share on LinkedIn</button>
-                <button class="btn btn-copy" onclick="copyScore()">Copy Score</button>
+                <button class="btn btn-play" onclick="startGame()">Try Again</button>
+                <button class="btn btn-switch" onclick="backToMenu()">Switch Villain</button>
+            </div>
+            <div class="share-row">
+                <button class="btn-social btn-linkedin" onclick="shareLinkedIn()"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>LinkedIn</button>
+                <button class="btn-social btn-facebook" onclick="shareFacebook()"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>Facebook</button>
+                <button class="btn-social btn-instagram" onclick="shareInstagram()"><svg viewBox="0 0 24 24"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 100-12.324zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405a1.441 1.441 0 11-2.882 0 1.441 1.441 0 012.882 0z"/></svg>Instagram</button>
+                <button class="btn-social btn-tiktok" onclick="shareTikTok()"><svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>TikTok</button>
             </div>
         </div>
     </div>
@@ -83,14 +122,19 @@
             <h1 class="win-title">PORTUGAL!</h1>
             <h2 style="color:#2ecc71">You reached the Pastel de Nata!</h2>
             <div class="score-card">
-                <div class="stat"><span class="stat-label">Distance</span><span class="stat-value">6,500 km</span></div>
-                <div class="stat"><span class="stat-label">Rockets Dodged</span><span class="stat-value" id="winDodged">0</span></div>
+                <div class="stat"><span class="stat-label">Distance</span><span class="stat-value" id="winDistance">6,500 km</span></div>
+                <div class="stat"><span class="stat-label" id="winDodgedLabel">Rockets Dodged</span><span class="stat-value" id="winDodged">0</span></div>
                 <div class="stat"><span class="stat-label">Total Score</span><span class="stat-value" id="winScore">0</span></div>
             </div>
             <div style="margin-top:12px">
-                <button class="btn btn-play" onclick="startGame()">Play Again</button><br>
-                <button class="btn btn-share" onclick="shareLinkedIn()">Share on LinkedIn</button>
-                <button class="btn btn-copy" onclick="copyScore()">Copy Score</button>
+                <button class="btn btn-play" onclick="startGame()">Play Again</button>
+                <button class="btn btn-switch" onclick="backToMenu()">Switch Villain</button>
+            </div>
+            <div class="share-row">
+                <button class="btn-social btn-linkedin" onclick="shareLinkedIn()"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>LinkedIn</button>
+                <button class="btn-social btn-facebook" onclick="shareFacebook()"><svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>Facebook</button>
+                <button class="btn-social btn-instagram" onclick="shareInstagram()"><svg viewBox="0 0 24 24"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 100-12.324zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405a1.441 1.441 0 11-2.882 0 1.441 1.441 0 012.882 0z"/></svg>Instagram</button>
+                <button class="btn-social btn-tiktok" onclick="shareTikTok()"><svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>TikTok</button>
             </div>
         </div>
     </div>
@@ -246,8 +290,67 @@ var redCarpet = null; // red carpet for Portugal entrance
 var enterPortugalTimer = 0; // timer for entering portugal sequence
 var eatingTimer = 0; // timer for eating animation
 var eatingPhase = 0; // 0=approaching, 1=eating, 2=done
-var TOTAL_DISTANCE = 6500;
 var GAME_DURATION = 19;
+
+// ===== GAME MODES =====
+var MODES = {
+    khamenei: {
+        villain: 'Ayatollah Khamenei',
+        location: 'Dubai',
+        locationFlag: '\uD83C\uDDE6\uD83C\uDDEA',
+        projectileName: 'Rockets',
+        projectileNameSingular: 'Rocket',
+        hudFrom: 'DUBAI',
+        hudTo: 'PORTUGAL',
+        destFlag: '\uD83C\uDDF5\uD83C\uDDF9',
+        distance: 6500,
+        diverLabel: 'IRGC',
+        hashtags: '#EscapeToPortugal #DubaiToPortugal #LinkedInGames'
+    },
+    trump: {
+        villain: 'Donald Trump',
+        location: 'USA',
+        locationFlag: '\uD83C\uDDFA\uD83C\uDDF8',
+        projectileName: 'ICE Agents',
+        projectileNameSingular: 'ICE Agent',
+        hudFrom: 'USA',
+        hudTo: 'PORTUGAL',
+        destFlag: '\uD83C\uDDF5\uD83C\uDDF9',
+        distance: 5500,
+        diverLabel: 'MAGA',
+        hashtags: '#EscapeToPortugal #USAToPortugal #LinkedInGames'
+    },
+    starmer: {
+        villain: 'Keir Starmer',
+        location: 'UK',
+        locationFlag: '\uD83C\uDDEC\uD83C\uDDE7',
+        projectileName: 'Tax Bills',
+        projectileNameSingular: 'Tax Bill',
+        hudFrom: 'UK',
+        hudTo: 'PORTUGAL',
+        destFlag: '\uD83C\uDDF5\uD83C\uDDF9',
+        distance: 1800,
+        diverLabel: 'HMRC',
+        hashtags: '#EscapeToPortugal #UKToPortugal #LinkedInGames'
+    }
+};
+var currentMode = 'khamenei';
+var TOTAL_DISTANCE = 6500;
+
+function selectMode(mode) {
+    currentMode = mode;
+    TOTAL_DISTANCE = MODES[mode].distance;
+    initAudio();
+    startGame();
+}
+
+function backToMenu() {
+    document.getElementById('gameOverOverlay').classList.remove('active');
+    document.getElementById('winOverlay').classList.remove('active');
+    document.getElementById('menuOverlay').classList.add('active');
+    state = MENU;
+    canRestart = true;
+}
 
 // Lawyer guide messages
 var LAWYER_QUOTES = [
@@ -459,17 +562,271 @@ function drawCoyoteDiver(c) {
         ctx.strokeStyle = '#a07820'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
     }
 
-    // "ACME" sign held (tiny, funny touch)
+    // Sign held (tiny, funny touch)
     ctx.save();
     ctx.translate(-6 * s, -12 * s);
     ctx.fillStyle = '#c0392b';
     ctx.fillRect(-8 * s, -4 * s, 16 * s, 8 * s);
     ctx.font = `bold ${5 * s}px system-ui`;
     ctx.fillStyle = 'white'; ctx.textAlign = 'center';
-    ctx.fillText('ACME', 0, 2 * s);
+    ctx.fillText(MODES[currentMode].diverLabel, 0, 2 * s);
     ctx.restore();
 
     ctx.restore();
+}
+
+// ===== DRAW KHAMENEI DIVER =====
+function drawKhameneiDiver(c) {
+    const s = c.h / 60;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(Math.PI * 0.5 + Math.sin(c.legFrame * 0.2) * 0.1);
+
+    // Arms reaching
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(12 * s, side * 5 * s);
+        ctx.lineTo(24 * s + Math.sin(c.reachFrame) * 3 * s, side * 3 * s);
+        ctx.strokeStyle = '#d4a574'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+        for (let f = -1; f <= 1; f++) {
+            ctx.beginPath(); ctx.moveTo(24 * s, side * 3 * s); ctx.lineTo(28 * s, side * 3 * s + f * 2 * s);
+            ctx.lineWidth = 1.5 * s; ctx.stroke();
+        }
+    }
+
+    // Robe/cloak (dark)
+    ctx.beginPath(); ctx.ellipse(0, 0, 14 * s, 12 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    // Robe trim
+    ctx.beginPath(); ctx.ellipse(0, 0, 14 * s, 12 * s, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1 * s; ctx.stroke();
+
+    // Head
+    const hx = 16 * s, hy = 0;
+    ctx.beginPath(); ctx.ellipse(hx, hy, 9 * s, 8 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#d4a574'; ctx.fill();
+
+    // Black turban
+    ctx.beginPath(); ctx.ellipse(hx, hy - 5 * s, 10 * s, 8 * s, 0, Math.PI, Math.PI * 2);
+    ctx.fillStyle = '#111'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx, hy - 4 * s, 11 * s, 5 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    // Turban top
+    ctx.beginPath();
+    ctx.moveTo(hx - 6 * s, hy - 8 * s);
+    ctx.quadraticCurveTo(hx, hy - 16 * s, hx + 6 * s, hy - 8 * s);
+    ctx.fillStyle = '#111'; ctx.fill();
+
+    // Beard (gray/white)
+    ctx.beginPath();
+    ctx.moveTo(hx - 6 * s, hy + 3 * s);
+    ctx.quadraticCurveTo(hx - 8 * s, hy + 14 * s, hx, hy + 16 * s);
+    ctx.quadraticCurveTo(hx + 8 * s, hy + 14 * s, hx + 6 * s, hy + 3 * s);
+    ctx.fillStyle = '#ccc'; ctx.fill();
+
+    // Glasses
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1 * s;
+    ctx.beginPath(); ctx.ellipse(hx - 3 * s, hy - 1 * s, 3.5 * s, 3 * s, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(hx + 4 * s, hy - 1 * s, 3.5 * s, 3 * s, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx + 0.5 * s, hy - 1 * s); ctx.lineTo(hx + 0.5 * s, hy - 1 * s); ctx.stroke();
+
+    // Eyes behind glasses
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(hx - 3 * s, hy - 1 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + 4 * s, hy - 1 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+
+    // Stern eyebrows
+    ctx.beginPath(); ctx.moveTo(hx - 6 * s, hy - 4 * s); ctx.lineTo(hx - 1 * s, hy - 5 * s);
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2 * s; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx + 1 * s, hy - 5 * s); ctx.lineTo(hx + 7 * s, hy - 4 * s);
+    ctx.stroke();
+
+    // IRGC sign
+    ctx.save();
+    ctx.translate(-6 * s, -12 * s);
+    ctx.fillStyle = '#2e7d32';
+    ctx.fillRect(-8 * s, -4 * s, 16 * s, 8 * s);
+    ctx.font = `bold ${5 * s}px system-ui`;
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center';
+    ctx.fillText('IRGC', 0, 2 * s);
+    ctx.restore();
+
+    ctx.restore();
+}
+
+// ===== DRAW TRUMP DIVER =====
+function drawTrumpDiver(c) {
+    const s = c.h / 60;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(Math.PI * 0.5 + Math.sin(c.legFrame * 0.2) * 0.1);
+
+    // Arms reaching (small hands!)
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(12 * s, side * 5 * s);
+        ctx.lineTo(22 * s + Math.sin(c.reachFrame) * 3 * s, side * 3 * s);
+        ctx.strokeStyle = '#f0b87a'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+        // Small hands
+        ctx.beginPath(); ctx.arc(22 * s, side * 3 * s, 2 * s, 0, Math.PI * 2);
+        ctx.fillStyle = '#f0b87a'; ctx.fill();
+    }
+
+    // Legs trailing
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(-8 * s, side * 5 * s);
+        ctx.lineTo(-22 * s + Math.sin(c.legFrame * 0.5 + side) * 5 * s, side * 8 * s);
+        ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+    }
+
+    // Body (suit)
+    ctx.beginPath(); ctx.ellipse(0, 0, 15 * s, 11 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a2740'; ctx.fill();
+
+    // Red tie
+    ctx.beginPath();
+    ctx.moveTo(8 * s, -2 * s); ctx.lineTo(6 * s, 6 * s); ctx.lineTo(8 * s, 8 * s); ctx.lineTo(10 * s, 6 * s);
+    ctx.closePath(); ctx.fillStyle = '#cc0000'; ctx.fill();
+
+    // White shirt collar
+    ctx.beginPath(); ctx.moveTo(5 * s, -3 * s); ctx.lineTo(8 * s, -1 * s); ctx.lineTo(11 * s, -3 * s);
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2 * s; ctx.stroke();
+
+    // Head
+    const hx = 16 * s, hy = 0;
+    ctx.beginPath(); ctx.ellipse(hx, hy, 9 * s, 8 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0b87a'; ctx.fill();
+
+    // Blond combover hair
+    ctx.beginPath();
+    ctx.moveTo(hx - 8 * s, hy - 3 * s);
+    ctx.quadraticCurveTo(hx - 5 * s, hy - 14 * s, hx + 4 * s, hy - 10 * s);
+    ctx.quadraticCurveTo(hx + 10 * s, hy - 8 * s, hx + 10 * s, hy - 2 * s);
+    ctx.quadraticCurveTo(hx + 8 * s, hy - 6 * s, hx + 2 * s, hy - 7 * s);
+    ctx.quadraticCurveTo(hx - 4 * s, hy - 7 * s, hx - 8 * s, hy - 3 * s);
+    ctx.fillStyle = '#f5c542'; ctx.fill();
+    // Hair swoosh on top
+    ctx.beginPath();
+    ctx.moveTo(hx - 6 * s, hy - 6 * s);
+    ctx.quadraticCurveTo(hx, hy - 13 * s, hx + 8 * s, hy - 5 * s);
+    ctx.strokeStyle = '#e8b832'; ctx.lineWidth = 2 * s; ctx.lineCap = 'round'; ctx.stroke();
+
+    // Eyes (squinting)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(hx - 3 * s, hy - 1 * s, 3 * s, 2 * s, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx + 4 * s, hy - 1 * s, 3 * s, 2 * s, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4682b4';
+    ctx.beginPath(); ctx.arc(hx - 2.5 * s, hy - 0.5 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + 4.5 * s, hy - 0.5 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+
+    // Frowning mouth
+    ctx.beginPath(); ctx.arc(hx + 1 * s, hy + 6 * s, 4 * s, Math.PI + 0.3, -0.3);
+    ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 1.5 * s; ctx.stroke();
+
+    // MAGA sign
+    ctx.save();
+    ctx.translate(-6 * s, -12 * s);
+    ctx.fillStyle = '#cc0000';
+    ctx.fillRect(-8 * s, -4 * s, 16 * s, 8 * s);
+    ctx.font = `bold ${4.5 * s}px system-ui`;
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center';
+    ctx.fillText('MAGA', 0, 2 * s);
+    ctx.restore();
+
+    ctx.restore();
+}
+
+// ===== DRAW STARMER DIVER =====
+function drawStarmerDiver(c) {
+    const s = c.h / 60;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(Math.PI * 0.5 + Math.sin(c.legFrame * 0.2) * 0.1);
+
+    // Arms reaching
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(12 * s, side * 5 * s);
+        ctx.lineTo(26 * s + Math.sin(c.reachFrame) * 3 * s, side * 3 * s);
+        ctx.strokeStyle = '#f0c8a0'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+        for (let f = -1; f <= 1; f++) {
+            ctx.beginPath(); ctx.moveTo(26 * s, side * 3 * s); ctx.lineTo(30 * s, side * 3 * s + f * 2 * s);
+            ctx.lineWidth = 1.5 * s; ctx.stroke();
+        }
+    }
+
+    // Legs trailing
+    for (let side = -1; side <= 1; side += 2) {
+        ctx.beginPath();
+        ctx.moveTo(-8 * s, side * 5 * s);
+        ctx.lineTo(-22 * s + Math.sin(c.legFrame * 0.5 + side) * 5 * s, side * 8 * s);
+        ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round'; ctx.stroke();
+    }
+
+    // Body (gray suit)
+    ctx.beginPath(); ctx.ellipse(0, 0, 15 * s, 10 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#404050'; ctx.fill();
+
+    // Red tie (Labour)
+    ctx.beginPath();
+    ctx.moveTo(8 * s, -2 * s); ctx.lineTo(6 * s, 5 * s); ctx.lineTo(8 * s, 7 * s); ctx.lineTo(10 * s, 5 * s);
+    ctx.closePath(); ctx.fillStyle = '#cc0000'; ctx.fill();
+
+    // White shirt
+    ctx.beginPath(); ctx.moveTo(5 * s, -3 * s); ctx.lineTo(8 * s, -1 * s); ctx.lineTo(11 * s, -3 * s);
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2 * s; ctx.stroke();
+
+    // Head
+    const hx = 16 * s, hy = 0;
+    ctx.beginPath(); ctx.ellipse(hx, hy, 9 * s, 8 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0c8a0'; ctx.fill();
+
+    // Short gray-brown hair
+    ctx.beginPath();
+    ctx.ellipse(hx, hy - 5 * s, 10 * s, 6 * s, 0, Math.PI, Math.PI * 2);
+    ctx.fillStyle = '#5a4a3a'; ctx.fill();
+    // Receding hairline
+    ctx.beginPath();
+    ctx.moveTo(hx - 6 * s, hy - 5 * s);
+    ctx.quadraticCurveTo(hx - 2 * s, hy - 3 * s, hx, hy - 6 * s);
+    ctx.quadraticCurveTo(hx + 2 * s, hy - 3 * s, hx + 6 * s, hy - 5 * s);
+    ctx.fillStyle = '#f0c8a0'; ctx.fill();
+
+    // Glasses
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1.2 * s;
+    ctx.beginPath(); ctx.ellipse(hx - 3 * s, hy - 1 * s, 3.5 * s, 2.5 * s, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(hx + 4 * s, hy - 1 * s, 3.5 * s, 2.5 * s, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hx + 0.5 * s, hy - 1 * s); ctx.lineTo(hx + 0.5 * s, hy - 1 * s); ctx.stroke();
+
+    // Eyes behind glasses
+    ctx.fillStyle = '#556';
+    ctx.beginPath(); ctx.arc(hx - 3 * s, hy - 1 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + 4 * s, hy - 1 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+
+    // Stern mouth
+    ctx.beginPath(); ctx.moveTo(hx - 3 * s, hy + 4 * s); ctx.lineTo(hx + 4 * s, hy + 4 * s);
+    ctx.strokeStyle = '#8b5742'; ctx.lineWidth = 1.5 * s; ctx.lineCap = 'round'; ctx.stroke();
+
+    // HMRC sign
+    ctx.save();
+    ctx.translate(-6 * s, -12 * s);
+    ctx.fillStyle = '#1a3a5c';
+    ctx.fillRect(-8 * s, -4 * s, 16 * s, 8 * s);
+    ctx.font = `bold ${4.5 * s}px system-ui`;
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center';
+    ctx.fillText('HMRC', 0, 2 * s);
+    ctx.restore();
+
+    ctx.restore();
+}
+
+// ===== MODE-AWARE DIVER DRAWING =====
+function drawVillainDiver(c) {
+    if (currentMode === 'khamenei') drawKhameneiDiver(c);
+    else if (currentMode === 'trump') drawTrumpDiver(c);
+    else if (currentMode === 'starmer') drawStarmerDiver(c);
+    else drawCoyoteDiver(c);
 }
 
 // ===== DRAW FRESH LAWYER =====
@@ -688,6 +1045,123 @@ function drawRocket(r) {
     ctx.fillStyle = '#ffe066'; ctx.fill();
 
     ctx.restore();
+}
+
+// ===== DRAW ICE AGENT (projectile for Trump mode) =====
+function drawICEAgent(r) {
+    ctx.save();
+    const angle = Math.atan2(r.vy, r.vx) - Math.PI / 2;
+    ctx.translate(r.x, r.y); ctx.rotate(angle);
+
+    // Trail
+    for (let i = r.trail.length - 1; i >= 0; i--) {
+        const t = r.trail[i];
+        if (t.alpha > 0 && t.size > 0) {
+            ctx.beginPath(); ctx.arc(t.x - r.x, t.y - r.y, Math.max(0, t.size), 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(100,150,255,${t.alpha * 0.5})`; ctx.fill();
+        }
+    }
+
+    // Body (dark uniform)
+    ctx.beginPath();
+    ctx.moveTo(0, -r.h/2);
+    ctx.lineTo(-r.w/2 - 2, r.h/4);
+    ctx.lineTo(r.w/2 + 2, r.h/4);
+    ctx.closePath();
+    ctx.fillStyle = '#1a2744'; ctx.fill();
+
+    // Head
+    ctx.beginPath(); ctx.arc(0, -r.h/2 - 4, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0c8a0'; ctx.fill();
+
+    // Cap
+    ctx.beginPath();
+    ctx.moveTo(-7, -r.h/2 - 5);
+    ctx.lineTo(7, -r.h/2 - 5);
+    ctx.lineTo(6, -r.h/2 - 9);
+    ctx.lineTo(-6, -r.h/2 - 9);
+    ctx.closePath();
+    ctx.fillStyle = '#1a2744'; ctx.fill();
+    // Cap brim
+    ctx.fillRect(-8, -r.h/2 - 5, 16, 2);
+
+    // "ICE" badge on chest
+    ctx.fillStyle = '#3366aa';
+    ctx.fillRect(-8, -r.h/2 + 6, 16, 10);
+    ctx.font = 'bold 7px system-ui';
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.fillText('ICE', 0, -r.h/2 + 14);
+
+    // Arms reaching out
+    ctx.beginPath();
+    ctx.moveTo(-r.w/2, 0);
+    ctx.lineTo(-r.w - 4, r.h/4 + 4);
+    ctx.strokeStyle = '#1a2744'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(r.w/2, 0);
+    ctx.lineTo(r.w + 4, r.h/4 + 4);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+// ===== DRAW TAX BILL (projectile for Starmer mode) =====
+function drawTaxBill(r) {
+    ctx.save();
+    const angle = Math.atan2(r.vy, r.vx) - Math.PI / 2;
+    ctx.translate(r.x, r.y); ctx.rotate(angle * 0.3); // slight tilt, paper flutters
+
+    // Trail
+    for (let i = r.trail.length - 1; i >= 0; i--) {
+        const t = r.trail[i];
+        if (t.alpha > 0 && t.size > 0) {
+            ctx.beginPath(); ctx.arc(t.x - r.x, t.y - r.y, Math.max(0, t.size), 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(200,180,150,${t.alpha * 0.4})`; ctx.fill();
+        }
+    }
+
+    // Envelope/paper
+    const pw = r.w + 8, ph = r.h - 4;
+    ctx.fillStyle = '#f5f0e0';
+    ctx.fillRect(-pw/2, -ph/2, pw, ph);
+    ctx.strokeStyle = '#c0a880'; ctx.lineWidth = 1;
+    ctx.strokeRect(-pw/2, -ph/2, pw, ph);
+
+    // Red "OVERDUE" stamp effect
+    ctx.save();
+    ctx.rotate(-0.2);
+    ctx.strokeStyle = '#cc0000'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(-8, -4, 16, 8);
+    ctx.font = 'bold 5px system-ui';
+    ctx.fillStyle = '#cc0000'; ctx.textAlign = 'center';
+    ctx.fillText('OVERDUE', 0, 2);
+    ctx.restore();
+
+    // "£" symbol
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillStyle = '#2c6e2c';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u00A3', 0, -ph/2 + 14);
+
+    // "TAX" text
+    ctx.font = 'bold 6px system-ui';
+    ctx.fillStyle = '#333';
+    ctx.fillText('TAX BILL', 0, ph/2 - 4);
+
+    // Lines to look like document text
+    ctx.fillStyle = '#ccc';
+    for (let ly = -2; ly <= 6; ly += 3) {
+        ctx.fillRect(-6, ly, 12, 1);
+    }
+
+    ctx.restore();
+}
+
+// ===== MODE-AWARE PROJECTILE DRAWING =====
+function drawProjectile(r) {
+    if (currentMode === 'trump') drawICEAgent(r);
+    else if (currentMode === 'starmer') drawTaxBill(r);
+    else drawRocket(r);
 }
 
 // ===== PARTICLES =====
@@ -913,8 +1387,8 @@ function drawHUD() {
     const fontSize = isPortrait ? 10 : 11;
     ctx.font = `bold ${fontSize}px system-ui`;
     ctx.fillStyle = 'white';
-    ctx.textAlign = 'left'; ctx.fillText('DUBAI', pad + 4, barY + barH - 4);
-    ctx.textAlign = 'right'; ctx.fillText('PORTUGAL', pad + barW - 4, barY + barH - 4);
+    ctx.textAlign = 'left'; ctx.fillText(MODES[currentMode].hudFrom, pad + 4, barY + barH - 4);
+    ctx.textAlign = 'right'; ctx.fillText(MODES[currentMode].hudTo, pad + barW - 4, barY + barH - 4);
 
     // Pastel de Nata icon at end of progress bar
     ctx.textAlign = 'center';
@@ -934,7 +1408,7 @@ function drawHUD() {
     ctx.fillText(`Score: ${score.toLocaleString()}`, W - pad, statY);
     ctx.textAlign = 'center'; ctx.font = `${isPortrait ? 11 : 13}px system-ui`;
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fillText(`Rockets Dodged: ${rocketsDodged}`, W / 2, statY);
+    ctx.fillText(`${MODES[currentMode].projectileName} Dodged: ${rocketsDodged}`, W / 2, statY);
 
     // BEEP BEEP
     if (beepTimer > 0) {
@@ -976,7 +1450,7 @@ var keys = {}, touchSide = 0;
 
 document.addEventListener('keydown', e => {
     keys[e.key] = true;
-    if ((e.key === ' ' || e.key === 'Enter') && state === MENU) startGame();
+    // Space/Enter don't start from menu - user must select a mode via buttons
     if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
 });
 document.addEventListener('keyup', e => { keys[e.key] = false; });
@@ -988,9 +1462,8 @@ canvas.addEventListener('touchstart', e => {
         const newSide = e.touches[0].clientX < W / 2 ? -1 : 1;
         // Tap same side again = stop
         touchSide = (touchSide === newSide) ? 0 : newSide;
-    } else if (state === MENU) {
-        startGame();
     }
+    // Don't start from menu via touch - user must select a mode via buttons
 }, { passive: false });
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
@@ -1062,7 +1535,8 @@ function gameOver() {
     document.getElementById('goDodged').textContent = rocketsDodged;
     document.getElementById('goSpeed').textContent = `${topSpeed.toLocaleString()} km/h`;
     document.getElementById('goScore').textContent = score.toLocaleString();
-    document.getElementById('goProgress').textContent = `You made it ${pct}% of the way to Portugal`;
+    document.getElementById('goProgress').textContent = `You made it ${pct}% of the way from ${MODES[currentMode].location} to Portugal`;
+    document.getElementById('goDodgedLabel').textContent = MODES[currentMode].projectileName + ' Dodged';
     setTimeout(() => document.getElementById('gameOverOverlay').classList.add('active'), 800);
     setTimeout(() => { canRestart = true; }, 1500);
 }
@@ -1075,18 +1549,21 @@ function winGame() {
     spawnConfetti();
     document.getElementById('winDodged').textContent = rocketsDodged;
     document.getElementById('winScore').textContent = score.toLocaleString();
+    document.getElementById('winDodgedLabel').textContent = MODES[currentMode].projectileName + ' Dodged';
+    document.getElementById('winDistance').textContent = MODES[currentMode].distance.toLocaleString() + ' km';
     setTimeout(() => document.getElementById('winOverlay').classList.add('active'), 800);
     setTimeout(() => { canRestart = true; }, 1500);
 }
 
 // ===== SHARE =====
 function getShareText() {
+    const m = MODES[currentMode];
     const dist = progress * TOTAL_DISTANCE | 0, pct = progress * 100 | 0, won = state === WIN;
     let t = won
-        ? `BEEP BEEP! The Road Runner reached the Pastel de Nata in Portugal! \uD83C\uDDF5\uD83C\uDDF9\uD83E\uDD50\n\n`
-        : `I helped the Road Runner sprint ${dist.toLocaleString()} km (${pct}% to Portugal) dodging rockets!\n\n`;
-    t += `\uD83D\uDE80 Rockets Dodged: ${rocketsDodged}\n\uD83D\uDCCF Distance: ${dist.toLocaleString()} km\n\uD83C\uDFC6 Score: ${score.toLocaleString()}\n\n`;
-    t += `Can you beat my score? Try it yourself!\n\n#EscapeToPortugal #RoadRunner #DubaiToPortugal #LinkedInGames`;
+        ? `BEEP BEEP! Escaped ${m.villain} and reached Portugal! ${m.destFlag}\uD83E\uDD50\n\n`
+        : `I sprinted ${dist.toLocaleString()} km (${pct}% from ${m.location} to Portugal) dodging ${m.projectileName.toLowerCase()}!\n\n`;
+    t += `${m.projectileName} Dodged: ${rocketsDodged}\n\uD83D\uDCCF Distance: ${dist.toLocaleString()} km\n\uD83C\uDFC6 Score: ${score.toLocaleString()}\n\n`;
+    t += `Can you beat my score? Try it yourself!\n\n${m.hashtags}`;
     return t;
 }
 
@@ -1100,7 +1577,7 @@ function shareLinkedIn() {
     if (isMobile) {
         // On mobile: copy text, then open LinkedIn share URL
         // shareArticle URL opens the share composer in the LinkedIn app
-        const url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(gameUrl)}&title=${encodeURIComponent('Escape to Portugal - Road Runner Game')}&summary=${encodeURIComponent(text)}`;
+        const url = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(gameUrl)}&title=${encodeURIComponent('RocketDodger by FRESH - Escape to Portugal')}&summary=${encodeURIComponent(text)}`;
         alert('Score copied to clipboard!\n\nLinkedIn will open — tap to create a post and paste your score.');
         const a = document.createElement('a');
         a.href = url; a.target = '_blank'; a.rel = 'noopener';
@@ -1111,12 +1588,62 @@ function shareLinkedIn() {
     }
 }
 
-function copyScore() {
-    navigator.clipboard.writeText(getShareText()).then(() => {
-        const btn = event.target;
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy Score', 2000);
+// Native Web Share API — works on mobile for any app (IG, TikTok, WhatsApp, etc.)
+function nativeShare() {
+    const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
+    return navigator.share({
+        title: 'RocketDodger by FRESH',
+        text: getShareText(),
+        url: gameUrl
     });
+}
+
+function shareFacebook() {
+    const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
+    const fullText = getShareText() + '\n\n' + gameUrl;
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
+        // On mobile, use native share which can target Facebook
+        navigator.clipboard.writeText(fullText).catch(() => {});
+        nativeShare().catch(() => {});
+    } else {
+        // Desktop: open Facebook share dialog, copy text for pasting
+        navigator.clipboard.writeText(fullText).catch(() => {});
+        alert('Score copied to clipboard!\n\nFacebook will open — paste your score into the post.');
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(gameUrl)}`, '_blank');
+    }
+}
+
+function shareInstagram() {
+    const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
+    const fullText = getShareText() + '\n\n' + gameUrl;
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
+        navigator.clipboard.writeText(fullText).catch(() => {});
+        nativeShare().catch(() => {});
+    } else {
+        navigator.clipboard.writeText(fullText).then(() => {
+            alert('Score copied to clipboard!\n\nOpen Instagram and paste your score into a new Story or Post.');
+        }).catch(() => {
+            alert('Copy this and share on Instagram:\n\n' + fullText);
+        });
+    }
+}
+
+function shareTikTok() {
+    const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
+    const fullText = getShareText() + '\n\n' + gameUrl;
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
+        navigator.clipboard.writeText(fullText).catch(() => {});
+        nativeShare().catch(() => {});
+    } else {
+        navigator.clipboard.writeText(fullText).then(() => {
+            alert('Score copied to clipboard!\n\nOpen TikTok and paste your score into a video caption or comment.');
+        }).catch(() => {
+            alert('Copy this and share on TikTok:\n\n' + fullText);
+        });
+    }
 }
 
 // ===== UPDATE =====
@@ -1345,7 +1872,7 @@ function render() {
 
     if (state === PLAYING || state === GAME_OVER || state === WIN || state === ENTERING_PORTUGAL || state === EATING_NATA) {
         drawSpeedLines();
-        rockets.forEach(r => drawRocket(r));
+        rockets.forEach(r => drawProjectile(r));
 
         // Red carpet for Portugal entrance
         if (redCarpet && redCarpet.alpha > 0) {
@@ -1433,8 +1960,8 @@ function render() {
             ctx.restore();
         }
 
-        // Coyote divers
-        coyoteDivers.forEach(c => drawCoyoteDiver(c));
+        // Villain divers
+        coyoteDivers.forEach(c => drawVillainDiver(c));
         if (player) drawRoadRunner(player);
 
         particles.forEach(p => {
@@ -1450,7 +1977,9 @@ function render() {
     if (state === MENU) {
         const sz = Math.min(W, H);
         drawRoadRunner({ x: W * 0.55, y: H * 0.72, w: sz * 0.07, h: sz * 0.1, legFrame: elapsed * 18 });
-        drawCoyoteDiver({ x: W * 0.35, y: H * 0.55 + Math.sin(elapsed * 2) * 15, w: sz * 0.07, h: sz * 0.1, legFrame: elapsed * 10, reachFrame: elapsed * 3 });
+        // Show a villain diver on menu based on last selected mode
+        var menuDiver = { x: W * 0.35, y: H * 0.55 + Math.sin(elapsed * 2) * 15, w: sz * 0.07, h: sz * 0.1, legFrame: elapsed * 10, reachFrame: elapsed * 3 };
+        drawVillainDiver(menuDiver);
         // Mini lawyer on menu
         drawLawyer({ x: W * 0.78, y: H * 0.76, size: sz * 0.08 });
         // Mini pastel de nata
