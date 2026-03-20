@@ -281,7 +281,7 @@ function spawnCoyoteDiver() {
         y: -80,
         w: Math.max(36, sz * 0.09),
         h: Math.max(60, sz * 0.14),
-        vy: 120 + progress * 200,
+        vy: 90 + progress * 150,
         vx: (Math.random() - 0.5) * 60,
         rotation: 0,
         legFrame: 0,
@@ -646,10 +646,10 @@ function drawSpeedLines() {
 function spawnRocket() {
     rockets.push({
         x: Math.random() * W, y: -40,
-        vx: (Math.random() - 0.5) * 100,
-        vy: 180 + progress * 400 + Math.random() * 120,
+        vx: (Math.random() - 0.5) * 70,
+        vy: 140 + progress * 250 + Math.random() * 80,
         w: 12, h: 35,
-        homing: progress > 0.4 && Math.random() < (progress - 0.2) * 0.6,
+        homing: progress > 0.6 && Math.random() < (progress - 0.5) * 0.4,
         trail: [], dodged: false
     });
 }
@@ -976,20 +976,27 @@ var keys = {}, touchSide = 0;
 
 document.addEventListener('keydown', e => {
     keys[e.key] = true;
-    if ((e.key === ' ' || e.key === 'Enter') && state !== PLAYING) startGame();
+    if ((e.key === ' ' || e.key === 'Enter') && state === MENU) startGame();
     if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
 });
 document.addEventListener('keyup', e => { keys[e.key] = false; });
 
+// Mobile: tap a side to RUN in that direction (stays running until you tap the other side)
 canvas.addEventListener('touchstart', e => {
     e.preventDefault(); initAudio();
-    touchSide = e.touches[0].clientX < W / 2 ? -1 : 1;
-    if (state !== PLAYING) startGame();
+    if (state === PLAYING) {
+        touchSide = e.touches[0].clientX < W / 2 ? -1 : 1;
+    } else if (state === MENU) {
+        startGame();
+    }
+    // Don't auto-restart on GAME_OVER or WIN — let overlay buttons handle it
 }, { passive: false });
 canvas.addEventListener('touchmove', e => {
-    e.preventDefault(); touchSide = e.touches[0].clientX < W / 2 ? -1 : 1;
+    e.preventDefault();
+    if (state === PLAYING) touchSide = e.touches[0].clientX < W / 2 ? -1 : 1;
 }, { passive: false });
-canvas.addEventListener('touchend', e => { e.preventDefault(); touchSide = 0; }, { passive: false });
+// Don't reset touchSide on touchend — keep running in last tapped direction
+canvas.addEventListener('touchend', e => { e.preventDefault(); }, { passive: false });
 
 canvas.addEventListener('mousedown', e => { initAudio(); if (state === PLAYING) touchSide = e.clientX < W / 2 ? -1 : 1; });
 canvas.addEventListener('mouseup', () => { touchSide = 0; });
@@ -1002,8 +1009,8 @@ function startGame() {
     document.getElementById('winOverlay').classList.remove('active');
 
     state = PLAYING; score = 0; rocketsDodged = 0; progress = 0; elapsed = 0;
-    topSpeed = 0; beepTimer = 0; beepCooldown = 0; lastTime = 0;
-    player = createPlayer(); coyote = null; coyoteDivers = []; nextCoyoteTime = 6;
+    topSpeed = 0; beepTimer = 0; beepCooldown = 0; lastTime = 0; touchSide = 0;
+    player = createPlayer(); coyote = null; coyoteDivers = []; nextCoyoteTime = 10;
     rockets = []; particles = []; speedLines = []; confetti = [];
     lawyers = []; lawyerMessages = []; pastelDeNata = null;
     redCarpet = null; enterPortugalTimer = 0; eatingTimer = 0; eatingPhase = 0;
@@ -1110,7 +1117,7 @@ function update(dt) {
         nextCoyoteTime -= dt;
         if (nextCoyoteTime <= 0) {
             spawnCoyoteDiver();
-            nextCoyoteTime = Math.max(2, 7 - progress * 5); // more frequent as game progresses
+            nextCoyoteTime = Math.max(3, 9 - progress * 5); // more frequent as game progresses
         }
         for (let i = coyoteDivers.length - 1; i >= 0; i--) {
             const c = coyoteDivers[i];
@@ -1207,7 +1214,7 @@ function update(dt) {
         }
 
         // Rockets
-        const rate = 1.2 + progress * 4.5;
+        const rate = 0.8 + progress * 2.5;
         if (Math.random() < rate * dt) spawnRocket();
         if (beepCooldown > 0) beepCooldown -= dt;
 
