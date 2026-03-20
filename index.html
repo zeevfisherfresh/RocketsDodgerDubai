@@ -981,15 +981,16 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => { keys[e.key] = false; });
 
-// Mobile: tap a side to RUN in that direction (stays running until you tap the other side)
+// Mobile: tap a side to RUN in that direction. Tap same side again to STOP.
 canvas.addEventListener('touchstart', e => {
     e.preventDefault(); initAudio();
     if (state === PLAYING) {
-        touchSide = e.touches[0].clientX < W / 2 ? -1 : 1;
+        const newSide = e.touches[0].clientX < W / 2 ? -1 : 1;
+        // Tap same side again = stop
+        touchSide = (touchSide === newSide) ? 0 : newSide;
     } else if (state === MENU) {
         startGame();
     }
-    // Don't auto-restart on GAME_OVER or WIN — let overlay buttons handle it
 }, { passive: false });
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
@@ -1090,15 +1091,18 @@ function getShareText() {
 }
 
 function shareLinkedIn() {
-    const url = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(getShareText())}`;
-    // Use a temporary link click — window.open gets blocked on mobile
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const gameUrl = 'https://zeevfisherfresh.github.io/RocketsDodgerDubai/';
+    const text = getShareText();
+    // Try native share first (works great on iPhone)
+    if (navigator.share) {
+        navigator.share({ title: 'Escape to Portugal - Road Runner Game', text: text, url: gameUrl }).catch(() => {});
+    } else {
+        // Fallback: LinkedIn share endpoint with URL
+        const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(gameUrl)}`;
+        const a = document.createElement('a');
+        a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
 }
 
 function copyScore() {
